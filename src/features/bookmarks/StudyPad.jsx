@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconLeft, IconRight, IconFlip, IconBookmark } from './icons';
 import { letter } from './content';
+import Rich from '../../components/Rich.jsx';
 import { findSave, addSave, removeSave, restoreSave } from './savesStore';
 import { useSavesState } from './useSaves';
 import { toast } from './toastBus';
@@ -19,7 +20,7 @@ export function CardFaces({ q, turn = true }) {
   return (<>
     <div className="bm-face"><div className="bm-lbl">Chapter {q.chapter} {q.fromCards ? 'cards' : 'quiz'}</div><div className={`bm-term${q.stem.length > 40 ? ' is-long' : ''}`}>{q.stem}</div>{turn ? <span className="bm-turn"><IconFlip /></span> : null}</div>
     <div className="bm-face is-back"><div className="bm-lbl">Answer</div>
-      <div><div className="bm-answer">{letter(q.answerIndex)}. {q.options[q.answerIndex]}</div>{q.explanation ? <p className="bm-meta" style={{ textTransform: 'none', fontFamily: 'inherit', fontSize: '1rem', marginTop: 10 }}>{q.explanation}</p> : null}</div>
+      <div><div className="bm-answer">{q.open ? <Rich text={q.answerText} /> : <>{letter(q.answerIndex)}. {q.options[q.answerIndex]}</>}</div>{q.explanation ? <p className="bm-meta" style={{ textTransform: 'none', fontFamily: 'inherit', fontSize: '1rem', marginTop: 10 }}>{q.explanation}</p> : null}</div>
     </div>
   </>);
 }

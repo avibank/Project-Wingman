@@ -1,3 +1,4 @@
+import { isOpenCard } from "./openCard.js";
 // The contract content answers to.
 //
 // Validation fails loudly and says where. This file will be edited weekly
@@ -19,6 +20,19 @@ function checkQuestion(q, w, errs) {
   check(Array.isArray(q.options) && q.options.length >= 2, w, "options must have at least two entries", errs);
   check(isNum(q.correct) && q.correct >= 0 && q.correct < (q.options?.length ?? 0),
     w, `correct must index one of the ${q.options?.length ?? 0} options`, errs);
+}
+
+/* A STUDY CARD IS EITHER SHAPE (see openCard.js). An open-ended one is held to
+   the only rules it can have: a front and a back, both words. A multiple-choice
+   one is held to the quiz question's rules exactly as before. */
+function checkCard(q, w, errs) {
+  if (!isOpenCard(q)) return checkQuestion(q, w, errs);
+  /* TRIMMED: `isStr` accepts "  ", and a card whose answer is a space flips over
+     to nothing — which the check:cards assertion for it found the first time it
+     was written with a signature that could actually fail. */
+  check(isStr(q.front) && q.front.trim() !== "", w, "front must be a non-empty string", errs);
+  check(isStr(q.back) && q.back.trim() !== "", w, "back must be a non-empty string", errs);
+  return null;
 }
 
 export function validateContent(doc) {
@@ -78,7 +92,7 @@ export function validateContent(doc) {
          and the cards together, since a saved card is found by id. */
       if (c.cards != null) {
         if (check(Array.isArray(c.cards), cw, "cards must be an array", errs)) {
-          c.cards.forEach((q, qi) => checkQuestion(q, `${cw}.cards[${qi}]`, errs));
+          c.cards.forEach((q, qi) => checkCard(q, `${cw}.cards[${qi}]`, errs));
         }
       }
       /* AND WHAT THE SET IS CALLED, when the document that supplied it has a

@@ -45,6 +45,7 @@ import {
   askedFor, shownList, faultList, countPdfPages,
 } from "./studioModel.js";
 import "./studio.css";
+import { isOpenCard } from "../../lib/openCard.js";
 
 export { countPdfPages };
 
@@ -213,15 +214,20 @@ export default function Studio() {
   const sendPicked = (move) => {
     if (!chosen.length) return;
     const other = tab === "cards" ? "quiz" : "cards";
-    const n = chosen.length;
+    /* Open-ended cards stay in the study cards: a quiz question needs answers to
+       choose between, and an open card has none. */
+    const sendable = other === "cards" ? chosen : chosen.filter((q) => !isOpenCard(q));
+    if (!sendable.length) { toast("Open-ended cards stay in the study cards: a quiz question needs answers to choose from"); return; }
+    const n = sendable.length;
+    const sent = new Set(sendable.map((q) => q.id));
     edit((d) => {
       const c = d.modules[mi].chapters[ci];
-      const made = copiedInto(c, other, chosen);
+      const made = copiedInto(c, other, sendable);
       if (other === "cards") c.cards = [...(c.cards || []), ...made];
       else { c.quiz = c.quiz || { id: `${c.id}.QZ`, name: "", questions: [] }; c.quiz.questions = [...c.quiz.questions, ...made]; }
       if (move) {
-        if (tab === "cards") c.cards = (c.cards || []).filter((q) => !picked.has(q.id));
-        else c.quiz.questions = c.quiz.questions.filter((q) => !picked.has(q.id));
+        if (tab === "cards") c.cards = (c.cards || []).filter((q) => !sent.has(q.id));
+        else c.quiz.questions = c.quiz.questions.filter((q) => !sent.has(q.id));
       }
     });
     pickNone();
@@ -514,34 +520,45 @@ export default function Studio() {
                           <button type="button" className="st-mini" onClick={() => dupQ(i)}>Duplicate</button>
                           <button type="button" className="st-mini st-danger" onClick={() => delQ(i)}>Delete</button>
                         </div>
-                        <textarea className="st-stem" rows={2} value={q.question} placeholder="The question"
-                                  onChange={(e) => patchQ(i, { question: e.target.value })} />
-                        <div className="st-opts">
-                          {(q.options || []).map((o, k) => (
-                            <label key={k} className={`st-opt${q.correct === k ? " is-right" : ""}`}>
-                              <input type="radio" name={`right-${q.id}`} checked={q.correct === k}
-                                     onChange={() => patchQ(i, { correct: k })}
-                                     aria-label={`${LETTERS[k]} is the right answer`} />
-                              <span className="st-letter">{LETTERS[k]}</span>
-                              <input className="st-otext" value={o} placeholder={`Answer ${LETTERS[k]}`}
-                                     onChange={(e) => patchQ(i, { options: q.options.map((x, j) => (j === k ? e.target.value : x)) })} />
-                              {q.options.length > 2 && (
-                                <button type="button" className="st-mini st-danger" aria-label={`Remove answer ${LETTERS[k]}`}
-                                        onClick={() => patchQ(i, {
-                                          options: q.options.filter((_, j) => j !== k),
-                                          correct: q.correct > k ? q.correct - 1 : Math.min(q.correct, q.options.length - 2),
-                                        })}>×</button>
-                              )}
-                            </label>
-                          ))}
-                          {q.options.length < 6 && (
-                            <button type="button" className="st-mini" onClick={() => patchQ(i, { options: [...q.options, ""] })}>
-                              Add an answer
-                            </button>
-                          )}
-                        </div>
-                        <textarea className="st-why" rows={2} value={q.explain || ""} placeholder="Why that is the answer (optional)"
-                                  onChange={(e) => patchQ(i, { explain: e.target.value })} />
+                        {isOpenCard(q) ? (
+                          <>
+                            <textarea className="st-stem" rows={2} value={q.front} placeholder="The question (the front of the card)"
+                                      onChange={(e) => patchQ(i, { front: e.target.value })} />
+                            <textarea className="st-why" rows={3} value={q.back} placeholder="The answer (the back). **Bold** marks a key term"
+                                      onChange={(e) => patchQ(i, { back: e.target.value })} />
+                          </>
+                        ) : (
+                          <>
+                          <textarea className="st-stem" rows={2} value={q.question} placeholder="The question"
+                                    onChange={(e) => patchQ(i, { question: e.target.value })} />
+                          <div className="st-opts">
+                            {(q.options || []).map((o, k) => (
+                              <label key={k} className={`st-opt${q.correct === k ? " is-right" : ""}`}>
+                                <input type="radio" name={`right-${q.id}`} checked={q.correct === k}
+                                       onChange={() => patchQ(i, { correct: k })}
+                                       aria-label={`${LETTERS[k]} is the right answer`} />
+                                <span className="st-letter">{LETTERS[k]}</span>
+                                <input className="st-otext" value={o} placeholder={`Answer ${LETTERS[k]}`}
+                                       onChange={(e) => patchQ(i, { options: q.options.map((x, j) => (j === k ? e.target.value : x)) })} />
+                                {q.options.length > 2 && (
+                                  <button type="button" className="st-mini st-danger" aria-label={`Remove answer ${LETTERS[k]}`}
+                                          onClick={() => patchQ(i, {
+                                            options: q.options.filter((_, j) => j !== k),
+                                            correct: q.correct > k ? q.correct - 1 : Math.min(q.correct, q.options.length - 2),
+                                          })}>×</button>
+                                )}
+                              </label>
+                            ))}
+                            {q.options.length < 6 && (
+                              <button type="button" className="st-mini" onClick={() => patchQ(i, { options: [...q.options, ""] })}>
+                                Add an answer
+                              </button>
+                            )}
+                          </div>
+                          <textarea className="st-why" rows={2} value={q.explain || ""} placeholder="Why that is the answer (optional)"
+                                    onChange={(e) => patchQ(i, { explain: e.target.value })} />
+                          </>
+                        )}
                       </li>
                     ))}
                   </ol>

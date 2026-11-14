@@ -237,6 +237,35 @@ console.log("\nwriting three hundred questions");
     ok("faults", "and the footer's sentences are those same faults",
        M.faultsOf(bad).length === 3 && /no question/.test(M.faultsOf(bad).join(" ")));
   }
+
+  /* --- OPEN-ENDED CARDS (owner, 2026-11-14: "moving on its all open ended") --
+     A card may be a front and a back with no options. The Studio must neither
+     call one broken for lacking options nor let a blank one through, a NEW card
+     is open-ended while a new quiz question is not, and an open card can never
+     be copied into a quiz, where it would have no answers to choose between. */
+  {
+    const open = (id, front, back) => ({ id, front, back });
+    const base = () => ({ modules: [{ id: "M2", name: "Module 13e", chapters: [{
+      id: "M2.V1", name: "Communication", quiz: { id: "M2.V1.QZ", name: "", questions: [] },
+      cards: [open("M2.V1.C001", "What does the modulator do?", "Places the **intelligence** on the RF signal.")] }] }] });
+    ok("open", "a card with a front and a back is not a fault", M.faultList(base()).length === 0);
+    const blank = base(); blank.modules[0].chapters[0].cards.push(open("M2.V1.C002", "  ", ""));
+    const f = M.faultList(blank).map((x) => x.why);
+    ok("open", "a blank one is: no question and no answer, and nothing about options",
+       f.includes("no question") && f.includes("no answer") && !f.some((w) => /answer chosen|two answers/.test(w)), f.join(" · "));
+    const ch = base().modules[0].chapters[0];
+    const nc = M.emptyQuestion(ch, "cards"), nq = M.emptyQuestion(ch, "quiz");
+    ok("open", "a NEW study card is open-ended", typeof nc.front === "string" && typeof nc.back === "string" && !("options" in nc));
+    ok("open", "and a new quiz question is still multiple choice", Array.isArray(nq.options) && nq.options.length === 3 && nq.correct === 0);
+    ok("open", "search reads a card's front and its back",
+       M.searchHit(ch.cards[0], ["modulator"]) && M.searchHit(ch.cards[0], ["intelligence"]));
+    ok("open", "an open card is never copied into the quiz", M.copiedInto(ch, "quiz", ch.cards).length === 0);
+    const legacy = { id: "M1.09.C001", question: "q", options: ["a", "b"], correct: 0 };
+    ok("open", "while a multiple-choice card still is, and the quiz can take it",
+       M.copiedInto(ch, "quiz", [legacy]).length === 1);
+    ok("open", "and an open card copied to the cards stays open",
+       M.copiedInto(ch, "cards", ch.cards).every((c) => typeof c.front === "string"));
+  }
 }
 
 const css = readFileSync("src/components/admin/studio.css", "utf8");

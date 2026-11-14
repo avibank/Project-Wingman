@@ -107,5 +107,35 @@ console.log("\nthe numbers the brief states out loud");
   ok("a fan shows seven", FAN_SHOWN === 7);
 }
 
+/* ------------------------------------------- 9 · open-ended cards (2026-11-14)
+   "Moving on its all open ended" (owner) — and "keep a older version simply to
+   power module 13d". So a card is EITHER shape, the schema holds each to its
+   own rules, and the shipped course is split exactly that way: 13d's cards
+   stay multiple choice, 13e's are a front and a back. */
+console.log("\nopen-ended cards");
+{
+  const { validateContent } = await import("../src/lib/contentSchema.js");
+  const { isOpenCard } = await import("../src/lib/openCard.js");
+  const { readFileSync } = await import("node:fs");
+  const doc = (cards) => ({ modules: [{ id: "M9", name: "Nine", chapters: [{ id: "M9.V1", name: "One", lessons: [],
+    quiz: { id: "M9.V1.QZ", questions: [{ id: "M9.V1.Q1", question: "q?", options: ["a", "b"], correct: 0 }] }, cards }] }] });
+  const good = { id: "M9.V1.C1", front: "What is a phasor?", back: "A rotating **vector**." };
+  ok("open · a front and a back is a valid card", validateContent(doc([good])).length === 0, validateContent(doc([good])).join("; "));
+  ok("open · a front with no back is refused", validateContent(doc([{ id: "x", front: "q" }])).some((e) => /front|back|options/.test(e)) || validateContent(doc([{ id: "x", front: "q", back: "" }])).length > 0);
+  ok("open · a blank back is refused", validateContent(doc([{ id: "x", front: "q", back: "  " }])).some((e) => /back/.test(e)));
+  ok("open · a multiple-choice card is still held to its own rules", validateContent(doc([{ id: "x", question: "q", options: ["a"], correct: 0 }])).length > 0
+     && validateContent(doc([{ id: "x", question: "q", options: ["a", "b"], correct: 1 }])).length === 0);
+  ok("open · isOpenCard tells the two apart", isOpenCard(good) && !isOpenCard({ question: "q", options: ["a", "b"], correct: 0 }));
+
+  const course = JSON.parse(readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8"));
+  const cardsOf = (id) => course.modules.find((m) => m.id === id).chapters.flatMap((c) => c.cards || []);
+  const m1 = cardsOf("M1"), m2 = cardsOf("M2");
+  ok("open · the shipped course validates, both shapes together", validateContent(course).length === 0, validateContent(course).slice(0, 2).join("; "));
+  ok("open · 13d's cards are all multiple choice, as they were", m1.length > 0 && m1.every((c) => !isOpenCard(c)));
+  ok("open · 13e's cards are all open-ended", m2.length > 0 && m2.every((c) => isOpenCard(c)));
+  ok("open · and every back says something", m2.every((c) => String(c.back).trim().length > 0 && String(c.front).trim().length > 0));
+  ok("open · no card was given options it did not have", m2.every((c) => !("options" in c) && !("correct" in c)));
+}
+
 console.log(`\ncards model: ${pass} passed, ${fails.length} failed`);
 process.exit(fails.length ? 1 : 0);
