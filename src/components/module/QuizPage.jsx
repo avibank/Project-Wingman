@@ -74,7 +74,8 @@ export default function QuizPage({
             quizId={chapter.quizId || chapter.id}
             total={chapter.questions.length}
             moduleCode={mod?.code || mod?.id || null}
-            chapterId={chapter.id}
+            /* The cards route is keyed by the chapter's NUMBER, not its id. */
+            cardsNo={chapterNo || ((mod?.chapters || []).findIndex((c) => c.id === chapter.id) + 1)}
             hasCards
             resuming={(run?.at || 0) > 0}
             me={me}

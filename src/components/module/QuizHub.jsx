@@ -41,6 +41,7 @@
    migration; until then the label says "Your best".
    ========================================================================= */
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Stamp from "../Stamp.jsx";
 import { stampOf } from "../../lib/stamp.js";
 import { fetchBoard, mmss, ord, setRunHidden } from "../../lib/board.js";
@@ -91,7 +92,7 @@ const ICONS = {
 };
 
 export default function QuizHub({
-  title, eyebrow, quizId, total, moduleCode, chapterId, hasCards = false,
+  title, eyebrow, quizId, total, moduleCode, cardsNo = 0, hasCards = false,
   resuming = false, me = null, onOpenPerson = null, onStart,
 }) {
   const go = useGo();
@@ -125,10 +126,13 @@ export default function QuizHub({
      the profile card — the licence, the add and the rest — which is what the
      rest of the app does for a person. */
   const [peek, setPeek] = useState(null);
-  const tap = (p) => {
+  const [peekAt, setPeekAt] = useState(null);   // where on screen it was pressed
+  const tap = (p, el) => {
     if (!p) return;
-    if (p.score != null) setPeek((cur) => (cur && cur.id === p.id ? null : p));
-    else if (!p.isYou) onOpenPerson?.({ userId: p.userId, name: p.callsign });
+    if (p.score != null) {
+      setPeekAt(el ? el.getBoundingClientRect() : null);
+      setPeek((cur) => (cur && cur.id === p.id ? null : p));
+    } else if (!p.isYou) onOpenPerson?.({ userId: p.userId, name: p.callsign });
   };
   useEffect(() => {
     if (!peek) return undefined;
@@ -148,7 +152,7 @@ export default function QuizHub({
     if (p) {
       return (
         <div className="qh-who" style={{ "--d": d }}>
-          <button type="button" className="qh-hit is-inline" onClick={() => tap(p)} aria-label={`${p.callsign}, place ${pos}`}>
+          <button type="button" className="qh-hit is-inline" onClick={(e) => tap(p, e.currentTarget)} aria-label={`${p.callsign}, place ${pos}`}>
             <Stamp stamp={stampOf(p.profile)} size={size} rot={tilt(pos)} on={!!p.profile?.stamp_issued_at} />
           </button>
           <span className="qh-nm">{p.callsign}</span>
@@ -164,6 +168,19 @@ export default function QuizHub({
       </div>
     );
   };
+
+  /* Where the card goes: centred on the pressed stamp, kept inside the window,
+     above it when there is room and below when there is not. */
+  const host = (typeof document !== "undefined" && document.querySelector(".app")) || null;
+  let float = null;
+  if (peek && peekAt && typeof window !== "undefined") {
+    const w = Math.min(340, window.innerWidth - 24), h = 214;
+    const cx = peekAt.left + peekAt.width / 2;
+    const left = Math.max(12, Math.min(cx - w / 2, window.innerWidth - w - 12));
+    const above = peekAt.top - h - 12 >= 12;
+    const top = above ? peekAt.top - h - 12 : Math.min(peekAt.bottom + 12, window.innerHeight - h - 12);
+    float = { position: "fixed", left, top: Math.max(12, top), width: w, transformOrigin: `${cx - left}px ${above ? "100%" : "0"}` };
+  }
 
   return (
     <div className="qhub">
@@ -232,7 +249,7 @@ export default function QuizHub({
               <span className="qh-c">
                 {!p && <span className="qh-ord">{ord(n)}</span>}
                 {p && (
-                  <button type="button" className="qh-hit is-inline" onClick={() => tap(p)} aria-label={`${p.callsign}, place ${n}`}>
+                  <button type="button" className="qh-hit is-inline" onClick={(e) => tap(p, e.currentTarget)} aria-label={`${p.callsign}, place ${n}`}>
                     <Stamp stamp={stampOf(p.profile)} size={36} rot={tilt(n)} on={!!p.profile?.stamp_issued_at} />
                   </button>
                 )}
@@ -243,38 +260,45 @@ export default function QuizHub({
         })}
       </div>
 
-      {/* THE PEEK IS A PANEL IN THE PAGE, not a window over it: nothing is frozen
-          or dimmed, the board stays in view and a second tap on the same stamp
-          (or the close mark) puts it away. */}
-      {peek && (
-        <section className="qh-peek" aria-label={`${peek.callsign}'s attempt`}>
-          <Stamp stamp={stampOf(peek.profile)} size={52} rot={-4} on={!!peek.profile?.stamp_issued_at} />
-          <div className="qh-pbody">
-            <b className="qh-pn">{peek.callsign}</b>
+      {/* THE PEEK FLOATS over the page like holding down a profile on Instagram
+          (owner, 2026-11-14): a card by the stamp that was pressed, a hair of
+          dimming, no freezing. A press anywhere else, Escape or the close mark
+          puts it away. It is portalled into `.app` because the module screen's
+          scroller traps a fixed child in its own stacking context — which is how
+          the first version only dimmed part of the window. */}
+      {peek && host && createPortal(
+        <div className="qhub qh-pop" onClick={() => setPeek(null)}>
+          <section className="qh-peek qh-float" role="dialog" aria-label={`${peek.callsign}'s attempt`}
+                   style={float} onClick={(e) => e.stopPropagation()}>
+            <header className="qh-ph">
+              <Stamp stamp={stampOf(peek.profile)} size={48} rot={-4} on={!!peek.profile?.stamp_issued_at} />
+              <b className="qh-pn">{peek.callsign}</b>
+              <button type="button" className="qh-x is-inline" onClick={() => setPeek(null)} aria-label="Close">
+                <Icon d="M6 6l12 12M18 6L6 18" />
+              </button>
+            </header>
             <div className="qh-tiles">
               <div className="qh-tile"><b>{peek.score}/{peek.total || total}</b><span>Score</span></div>
               <div className="qh-tile qh-accent"><b>{gradeOf(Math.round((peek.score / (peek.total || total || 1)) * 100))}</b><span>Grade</span></div>
               <div className="qh-tile"><b>{mmss(peek.seconds)}</b><span>Time</span></div>
             </div>
             {!peek.isYou && onOpenPerson && (
-              <button type="button" className="qh-prof" onClick={() => onOpenPerson({ userId: peek.userId, name: peek.callsign })}>
+              <button type="button" className="qh-prof" onClick={() => { const q = peek; setPeek(null); onOpenPerson({ userId: q.userId, name: q.callsign }); }}>
                 View profile
               </button>
             )}
-          </div>
-          <button type="button" className="qh-x is-inline" onClick={() => setPeek(null)} aria-label="Close">
-            <Icon d="M6 6l12 12M18 6L6 18" />
-          </button>
-        </section>
+          </section>
+        </div>,
+        host,
       )}
 
       <div className="qhub__go">
         <button type="button" className="qhub__start" data-hub="start" onClick={onStart}>
           {resuming ? "Pick up where you left off" : "Start the quiz"}
         </button>
-        {hasCards && (
+        {hasCards && cardsNo >= 1 && (
           <button type="button" className="qhub__warm" data-hub="cards"
-                  onClick={() => go(routePath.cards(moduleCode, chapterId))}>
+                  onClick={() => go(routePath.cards(moduleCode, cardsNo))}>
             Warm up with the study cards
           </button>
         )}
@@ -350,10 +374,13 @@ export default function QuizHub({
         .qhub .qh-eye::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
         .qhub .qh-eye:hover { background: var(--raised); color: var(--t1); }
         .qhub .qh-eye[aria-pressed="true"] { color: var(--active-text, var(--active)); }
-        .qhub .qh-peek { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px 40px 14px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); animation: qhSlide .3s both; }
-        .qhub .qh-pbody { display: grid; gap: 10px; min-width: 0; }
+        .qhub.qh-pop { position: fixed; inset: 0; z-index: 70; display: block; max-width: none; margin: 0; padding: 0; background: rgb(0 0 0 / .06); }
+        .qhub .qh-float { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--ground); box-shadow: 0 18px 50px rgb(0 0 0 / .32), 0 2px 8px rgb(0 0 0 / .18); animation: qhPop .32s cubic-bezier(.2, 1.25, .35, 1) both; }
+        .qhub .qh-ph .qh-x { top: 50%; right: 0; transform: translateY(-50%); }
+        .qhub .qh-ph { display: flex; align-items: center; gap: 12px; padding-right: 30px; position: relative; }
+        @keyframes qhPop { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: none; } }
         .qhub .qh-pn { font: 600 18px var(--font-ui); color: var(--t1); }
-        .qhub .qh-peek .qh-tile { height: 60px; }
+        .qhub .qh-float .qh-tile { height: 62px; }
         .qhub .qh-prof { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 14px; background: var(--raised); color: var(--t1); font: 500 15px var(--font-ui); cursor: pointer; }
         .qhub .qh-prof:hover { border-color: var(--active); }
         .qhub .qh-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--t3); cursor: pointer; }
