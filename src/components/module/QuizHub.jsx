@@ -18,6 +18,10 @@
        not. Only the top ten ever appear.
      · Start, then the study cards.
 
+   UNMARKED SHOWS THE HOUSE STAMP, NOT YOURS (owner, 2026-11-14): until a sitting is
+   finished the ring and first place carry the default seal, and the student's
+   real stamp arrives with their finished run, on the board.
+
    AN EMPTY BOARD IS HONEST AND NOT BLEAK (owner: "just as encouraging if it has
    twenty attempts or none"). The three places are drawn as faded gold, silver
    and bronze seals — medals waiting to be given — and first place carries the
@@ -83,7 +87,7 @@ const ICONS = {
 
 export default function QuizHub({
   title, eyebrow, quizId, total, moduleCode, chapterId, hasCards = false,
-  resuming = false, me = null, myStamp = null, onStart,
+  resuming = false, me = null, onStart,
 }) {
   const go = useGo();
   const [board, setBoard] = useState(null);
@@ -122,7 +126,7 @@ export default function QuizHub({
     return (
       <div className="qh-who" style={{ "--d": d }}>
         {pos === 1 && !mine
-          ? <span className="qh-seal qh-mine"><Stamp stamp={myStamp} size={size} rot={-4} on={false} /></span>
+          ? <span className="qh-seal qh-mine"><Stamp stamp={null} size={size} rot={-4} on={false} /></span>
           : <span className="qh-seal"><Seal size={size} tone={tone} /></span>}
       </div>
     );
@@ -158,7 +162,7 @@ export default function QuizHub({
             <div className="qh-mid">
               {mine
                 ? <>{mine.score}<small>/{mine.total || total}</small></>
-                : <Stamp stamp={myStamp} size={54} rot={-6} on={false} />}
+                : <Stamp stamp={null} size={54} rot={-6} on={false} />}
             </div>
           </div>
           <div className="qh-tiles">
