@@ -230,8 +230,13 @@ ok("answers", "the brief itself is in the repo, beside the pack it came with",
      !/startRun|finishRun|markProgress/.test(hub));
   ok("hub", "only the top ten ever appear", /export const TOP = 10/.test(hub) && /\.slice\(0, TOP\)/.test(hub));
   ok("hub", "the podium and seven dots cover one to ten", /\[2, 1, 3\]/.test(hub) && /\[4, 5, 6, 7, 8, 9, 10\]/.test(hub));
-  ok("hub", "nobody's score is drawn on the board: the score is only in the dial",
-     (hub.match(/\.score/g) || []).length === (hub.match(/mine\.score/g) || []).length);
+  ok("hub", "a score is drawn only in your own dial and in a person's peek, never on the board",
+     (hub.match(/\.score/g) || []).length === (hub.match(/(mine|peek|p)\.score/g) || []).length
+     && !/runs\[[^\]]*\]\.score/.test(hub));
+  ok("hub", "tapping somebody shows their numbers, or their profile when they are hidden",
+     /if \(p\.score != null\) setPeek\(p\)/.test(hub) && /onOpenPerson\?\.\(/.test(hub));
+  ok("hub", "the eye hides it, and the server is what withholds it (0044)",
+     /setRunHidden/.test(hub) && /hidden and not is_you then null/.test(read("../supabase/migrations/0044_hide_my_attempt.sql")));
   ok("hub", "the client sorts nothing and never computes a time", !/\.sort\(/.test(hub) && !/Date\.parse/.test(hub));
   ok("hub", "an empty board is seals and your own stamp, not a spinner or a skeleton",
      /function Seal/.test(hub) && !/shimmer|skeleton|spinner/i.test(hub.replace(/\/\*[\s\S]*?\*\//g, "")));

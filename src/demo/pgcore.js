@@ -244,11 +244,17 @@ export const RPC = {
     const row = {
       id: uuid(), user_id: b.uid, module_code: b.p_module || null,
       chapter_id: b.p_chapter || null, quiz_id: b.p_quiz, total: b.p_total,
-      score: null, callsign: null, code: null,
+      score: null, callsign: null, code: null, hidden: false,
       started_at: new Date().toISOString(), submitted_at: null,
     };
     s.quiz_runs.push(row);
     return row.id;
+  },
+
+  set_run_hidden: (s, b) => {
+    const row = s.quiz_runs.find((r) => r.id === b.p_run && r.user_id === b.uid);
+    if (row) row.hidden = Boolean(b.p_hidden);
+    return null;
   },
 
   finish_quiz_run: (s, b) => {
@@ -363,7 +369,9 @@ export const RPC = {
         rank: i + 1, run_id: r.id, user_id: r.user_id,
         callsign: (r.callsign || "").trim() || "Someone",
         code: (r.code || "").trim() || "---",
-        score: r.score, total: r.total, seconds: secs(r),
+        /* a hidden attempt's numbers stay with its owner (0044) */
+        score: r.hidden && r.user_id !== b.uid ? null : r.score, total: r.total,
+        seconds: r.hidden && r.user_id !== b.uid ? null : secs(r), hidden: Boolean(r.hidden),
         is_you: r.user_id === b.uid, runs_total: sorted.length,
         stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
         stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
