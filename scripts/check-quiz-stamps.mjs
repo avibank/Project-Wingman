@@ -88,7 +88,7 @@ const brief = read("../docs/launch/BRIEF-QUIZ-STAMPS.md");
      !/br__ag/.test(lb) && !/>again</.test(lb));
   ok("board", "the slot the stamp leaves stays the width of a stamp",
      /\.br\s*\{[^}]*grid-template-columns:\s*28px 42px/.test(css) && /\.br__st\.rep\s*\{\s*opacity:\s*0/.test(css));
-  ok("board", "the stamp on a row is 42px", /size=\{42\}/.test(lb));
+  ok("board", "the stamp on a row is 54px", /size=\{54\}/.test(lb));
   /* The board's rows are RUNS and the query must keep them that way — the
      brief says outright: "do not DISTINCT it in SQL, the board needs every
      run". 0038 is a different function for a different question. */
@@ -102,7 +102,7 @@ const brief = read("../docs/launch/BRIEF-QUIZ-STAMPS.md");
 /* ------------------------------------------------ 4 · the Library's finisher line */
 {
   ok("library", "eleven is declared once, at the top", (lib.match(/STAMP_CAP = 11/g) || []).length === 1);
-  ok("library", "a stamp on the line is 36px", /LIB_STAMP_PX = 36/.test(lib) && /size=\{LIB_STAMP_PX\}/.test(lib));
+  ok("library", "a stamp on the line is 46px", /LIB_STAMP_PX = 46/.test(lib) && /size=\{LIB_STAMP_PX\}/.test(lib));
   ok("library", "the remainder is +n, and the count is in words",
      /<span className="fin__more">\+\{over\}<\/span>/.test(lib) && /<span className="fin__n">\{found\.total\} finished<\/span>/.test(lib));
   ok("library", "+n is the whole count less what is shown, never the page's length",

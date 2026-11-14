@@ -68,7 +68,7 @@ export default function Leaderboard({ title, runs = [], total = 0, boardSize = 0
                     they are not, and the one that is true is the server's. */}
                 <span className="br__n">{r.rank}</span>
                 <span className="br__st">
-                  <Stamp stamp={stampOf(r.profile)} size={42} rot={tilt(i)}
+                  <Stamp stamp={stampOf(r.profile)} size={54} rot={tilt(i)}
                          on={!!r.profile?.stamp_issued_at}
                          label={`${r.callsign}, ${r.account}`} />
                 </span>
