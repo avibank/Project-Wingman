@@ -102,14 +102,36 @@ if (res.status !== 200 || !res.j?.[0]?.id) {
 
 const after = await rpc("current_course", {});
 const live = after.j?.[0];
-const m1 = (live?.doc?.modules || []).find((m) => m.id === "M1");
-const chapters = m1?.chapters || [];
-const q = chapters.reduce((a, c) => a + (c.quiz?.questions?.length || 0), 0);
-const cards = chapters.reduce((a, c) => a + (c.cards?.length || 0), 0);
+/* THE READ-BACK COUNTS EVERY MODULE, and says so per module. It used to count
+   Module 1 only — `modules.find(M1)` — which made a publish that carried Module
+   13e read back exactly like one that did not: on 2026-11-14 a "15 chapters ·
+   600 questions" line was taken for evidence that 13e was missing, and the
+   guidance written from it (expect 16 / 640) was wrong for a line that could
+   never move. What goes in is compared with what comes back, module by module,
+   so a publish from a stale checkout or a truncated document fails here. */
+const tally = (modules) => (modules || []).map((m) => {
+  const cs = m.chapters || [];
+  return {
+    id: m.id,
+    chapters: cs.length,
+    questions: cs.reduce((a, c) => a + (c.quiz?.questions?.length || 0), 0),
+    cards: cs.reduce((a, c) => a + (c.cards?.length || 0), 0),
+    papers: (m.downloads || []).length,
+  };
+});
+const sent = tally(doc.modules);
+const back = tally(live?.doc?.modules);
+const sum = (rows, k) => rows.reduce((a, r) => a + r[k], 0);
 console.log(`\npublished as version ${live?.id}, note ${JSON.stringify(live?.note)}, at ${live?.published_at}`);
-console.log(`read back: ${chapters.length} chapters · ${q} quiz questions · ${cards} cards · ${(m1?.downloads || []).length} papers`);
-console.log(`           batches ${chapters.map((c) => c.batch).join(", ")}`);
-if (chapters.length !== (doc.modules.find((m) => m.id === "M1").chapters || []).length) {
-  console.error("WARNING: what came back is not what went in.");
+for (const r of back) {
+  console.log(`           ${r.id}: ${r.chapters} chapters · ${r.questions} quiz questions · ${r.cards} cards · ${r.papers} papers`);
+}
+console.log(`read back: ${sum(back, "chapters")} chapters · ${sum(back, "questions")} quiz questions · ${sum(back, "cards")} cards · ${sum(back, "papers")} papers (all modules)`);
+if (JSON.stringify(back) !== JSON.stringify(sent)) {
+  console.error("WARNING: what came back is not what went in, module by module:");
+  for (const s of sent) {
+    const r = back.find((x) => x.id === s.id);
+    if (JSON.stringify(r) !== JSON.stringify(s)) console.error(`  ${s.id}: sent ${JSON.stringify(s)}  back ${JSON.stringify(r)}`);
+  }
   process.exit(1);
 }

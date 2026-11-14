@@ -237,11 +237,18 @@ with the same correct text.
   - **PUBLISH FROM A CHECKOUT THAT MATCHES `origin/main`.** `publish-course`
     publishes the `test-content.json` of the checkout it runs in. On 2026-11-14 it
     was run from the main checkout while that was four commits behind, and
-    published **version 17 without Module 13e**: the read-back said 15 chapters ·
-    600 questions · 15 papers where 16 · 640 · 16 was expected, and the paper
-    check only covered the 15 papers that checkout knew about. No harm — it was
-    the same content as version 16 — but it is the quiet way to publish nothing.
-    Check the read-back against what you meant to ship.
+    published **version 17 without Module 13e** — the same content as version 16,
+    so no harm, but the quiet way to publish nothing. What gave it away was the
+    paper check covering 15 papers instead of 16; the checkout then showed M2 with
+    no chapters. Versions 18 (the 400-question cards) and 19 (the open-ended ones,
+    the current one) carry 13e.
+  - **AND ITS READ-BACK LINE COULD NOT HAVE SHOWN IT.** It counted Module 1 only
+    (`modules.find(M1)`), so "15 chapters · 600 quiz questions" read identically
+    whether or not 13e went in — and was misread as evidence, with guidance written
+    from it that was wrong for a number that could never move. It tallies every
+    module now, prints each, and compares what went in with what came back module
+    by module, failing on any difference. A good run of today's course reads
+    **16 chapters · 640 quiz questions · 2690 cards · 16 papers**.
 - **VERCEL REJECTED EVERY DEPLOYMENT BECAUSE A PAUSED SUPABASE RESOURCE WAS
   ATTACHED TO THE PROJECT, and it was not the code** (found and fixed
   2026-11-12; every push from 2026-10-16 failed, last green `5492a82`). The
