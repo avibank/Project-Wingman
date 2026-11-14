@@ -76,11 +76,14 @@ const toRow = (r) => ({
 });
 
 /** The board for one paper. Ranked, timed and placed by the server. */
-export async function fetchBoard({ me, quizId, limit = 50 }) {
+export async function fetchBoard({ me, quizId, limit = 50, admin = false }) {
   if (!configured || !me || !quizId) return { runs: [], total: 0 };
-  const { data, error } = await supabase.rpc("quiz_leaderboard", {
-    uid: me, p_quiz: quizId, p_limit: limit,
-  });
+  const ask = (extra) => supabase.rpc("quiz_leaderboard", { uid: me, p_quiz: quizId, p_limit: limit, ...extra });
+  let { data, error } = await ask(admin ? { p_admin: true } : {});
+  /* An admin's request names p_admin, which a database that has not had 0045
+     run does not know: that is an error, and an admin must not lose the board
+     to it. Ask again plainly. */
+  if (error && admin) ({ data, error } = await ask({}));
   if (error) return fail(error, { runs: [], total: 0 });
   const rows = (data || []).map(toRow);
   /* `runs_total` is the size of the whole board; `rows.length` is what the

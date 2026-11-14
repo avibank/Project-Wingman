@@ -93,17 +93,17 @@ const ICONS = {
 
 export default function QuizHub({
   title, eyebrow, quizId, total, moduleCode, cardsNo = 0, hasCards = false,
-  resuming = false, me = null, onOpenPerson = null, onStart,
+  resuming = false, me = null, admin = false, onOpenPerson = null, onStart,
 }) {
   const go = useGo();
   const [board, setBoard] = useState(null);
   useEffect(() => {
     let live = true;
-    fetchBoard({ me, quizId, limit: 50 })
+    fetchBoard({ me, quizId, limit: 50, admin })
       .then((b) => { if (live) setBoard(b); })
       .catch(() => { if (live) setBoard({ runs: [], total: 0 }); });
     return () => { live = false; };
-  }, [me, quizId]);
+  }, [me, quizId, admin]);
 
   const runs = useMemo(() => (board?.runs || []).slice(0, TOP), [board]);
   /* The student's own run, wherever it ranks — the dial shows it even from
