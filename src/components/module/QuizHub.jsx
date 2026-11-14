@@ -202,7 +202,7 @@ export default function QuizHub({
             <div className="qh-mid">
               {mine
                 ? <>{mine.score}<small>/{mine.total || total}</small></>
-                : <Stamp stamp={null} size={54} rot={-6} on={false} />}
+                : <Stamp stamp={null} size={76} rot={0} on={false} />}
             </div>
           </div>
           <div className="qh-tiles">
@@ -218,7 +218,7 @@ export default function QuizHub({
           {[2, 1, 3].map((pos) => (
             <div key={pos} className={`qh-pcol qh-p${pos}${runs[pos - 1]?.isYou ? " qh-you" : ""}`}>
               {seat(pos)}
-              <div className="qh-block" style={{ "--d": pos === 1 ? ".05s" : pos === 2 ? ".18s" : ".3s" }}><b>{pos}<sup>{ord(pos).slice(String(pos).length)}</sup></b></div>
+              <div className="qh-block" style={{ "--d": pos === 1 ? ".05s" : pos === 2 ? ".18s" : ".3s" }}></div>
             </div>
           ))}
         </div>
@@ -294,7 +294,8 @@ export default function QuizHub({
         .qhub .qh-lbl svg { width: 14px; height: 14px; }
         .qhub .qh-lbody { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(8px, 2.5vw, 14px); align-items: center; }
         .qhub .qh-ring { position: relative; width: 104px; height: 104px; }
-        .qhub .qh-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        /* the RING turns so it starts at twelve o'clock; a stamp inside it must not turn with it */
+        .qhub .qh-ring > svg { width: 100%; height: 100%; transform: rotate(-90deg); }
         .qhub .qh-ring .qh-trk { stroke: var(--raised); }
         .qhub .qh-ring .qh-bar { stroke: var(--active); stroke-linecap: round; transition: stroke-dashoffset 1.1s cubic-bezier(.2, .8, .2, 1); }
         .qhub .qh-ring .qh-dash { stroke: var(--line); stroke-dasharray: 3 5; stroke-linecap: round; }
@@ -330,7 +331,6 @@ export default function QuizHub({
         .qhub .qh-dot.qh-on .qh-c { border: 1.5px solid var(--line); background: var(--panel); }
         .qhub .qh-dot.qh-you .qh-c { border-color: var(--active); box-shadow: 0 0 0 3px color-mix(in oklab, var(--active) 22%, transparent); }
         .qhub .qh-ord { font: 600 11px var(--font-mono); color: var(--t2); }
-        .qhub .qh-block sup { font-size: .38em; margin-left: 2px; vertical-align: super; letter-spacing: 0; }
         .qhub .qh-dot .qh-n { font: 600 10.5px var(--font-mono); color: var(--t2); }
         .qhub .qh-dot:first-child:not(.qh-on) .qh-c { border-color: color-mix(in oklab, var(--active) 60%, var(--line)); }
 
