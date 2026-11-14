@@ -2094,7 +2094,8 @@ function AppInner() {
                             /* The ported card session is a full-screen
                                overlay with one way out, and it goes back to
                                the Library it was opened from. */
-                            onCloseCards={() => go(routePath.library(route.moduleCode || activeModuleCode))} />
+                            onCloseCards={() => go(routePath.library(route.moduleCode || activeModuleCode))}
+                            onHome={goHome} />
         </main>
       ) : route.name === "clerk" ? (
         /* Clerk owns the email and password flows, including verification and

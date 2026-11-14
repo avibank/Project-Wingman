@@ -114,6 +114,17 @@ try {
     ok(name, "the card keeps 3:2", Math.abs(fit.ratio - 1.5) < 0.02, `${fit.ratio.toFixed(3)}`);
     ok(name, "the whole card is on screen", fit.cardOn);
     ok(name, "the page underneath does not scroll", fit.bodyLocked);
+    /* The way out: an arrow back to the module and the wordmark home, both in
+       the window and clear of the set picker. */
+    const ex = await pg.evaluate(() => {
+      const r = (s) => document.querySelector(s)?.getBoundingClientRect();
+      const a = r('[data-dk="module"]'), h = r('[data-dk="home"]'), k = r(".setpick");
+      const hit = (b) => b && b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight;
+      const clear = (x, y) => x && y && (x.right <= y.left || y.right <= x.left || x.bottom <= y.top || y.bottom <= x.top);
+      return { both: !!(a && h), inView: hit(a) && hit(h), clear: clear(a, k) && clear(h, k) };
+    });
+    ok(name, "a back arrow and the wordmark are on the session", ex.both);
+    ok(name, "and are in the window, clear of the set picker", ex.inView && ex.clear, JSON.stringify(ex));
     await pg.close();
   }
 
@@ -289,6 +300,15 @@ try {
     } else { pass += 2; }
   } else { pass += 2; }
   await clear.close();
+
+  /* ------------------------------------------------------------ the way out */
+  await pg.click('.wm-port [data-dk="module"]');
+  await pg.waitForTimeout(900);
+  ok(name, "the back arrow returns to the module's Library", /\/m\/[^/]+\/library\/?$/.test(pg.url().replace(/[?#].*$/, "")), pg.url());
+  await open(pg);
+  await pg.click('.wm-port [data-dk="home"]');
+  await pg.waitForTimeout(900);
+  ok(name, "the wordmark goes home", /^https?:\/\/[^/]+\/?$/.test(pg.url().replace(/[?#].*$/, "")), pg.url());
 
   /* ------------------------------------------------- reduced motion still works */
   const rm = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
