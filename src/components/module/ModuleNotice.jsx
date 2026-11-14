@@ -44,17 +44,23 @@ export default function ModuleNotice() {
 
       <style>{`
         .modnote {
-          display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-          gap: 11px; align-items: center;
-          margin: 16px 0 0; padding: 11px 10px 11px 14px;
-          background: var(--panel); border: 1px solid var(--line);
-          /* A FILLED TOP EDGE, which is how this app marks something as live.
-             §"No glow rings. Active reads structurally — a filled top edge." */
-          border-top: 2px solid var(--active);
+          /* The icon column is as wide as the dismiss control, so the words sit
+             truly centred between them. */
+          display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px;
+          gap: 12px; align-items: center;
+          margin: 16px 0 0; padding: 18px 14px;
+          /* SOFT AMBER (owner, 2026-11-14), a fixed hue rather than the livery's
+             so a notice reads as a notice in every livery. A tint of amber over
+             the panel, with the filled top edge this app uses for "live". */
+          --amber: oklch(.8 .13 78);
+          background: color-mix(in oklab, var(--amber) 13%, var(--panel));
+          border: 1px solid color-mix(in oklab, var(--amber) 32%, var(--line));
+          border-top: 2px solid var(--amber);
           border-radius: 13px;
         }
-        .modnote__i { color: var(--active); flex: none; }
-        .modnote__t { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.5; }
+        .app.theme-light .modnote { --amber: oklch(.7 .14 72); }
+        .modnote__i { color: var(--amber); flex: none; justify-self: center; }
+        .modnote__t { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.6; text-align: center; text-wrap: balance; }
         /* THE QUIET HALF TAKES --t2, NOT --t3. --t3 is right for a 10px
            uppercase mark; this is a sentence read as words, and the pairs this
            repo has already measured under 4.5:1 were all of exactly that
