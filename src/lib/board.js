@@ -33,6 +33,14 @@ export async function startRun({ me, moduleCode, chapterId, quizId, total }) {
   return (Array.isArray(data) ? data[0] : data) || null;
 }
 
+/** The eye on an attempt: hides its score, grade and time from everyone else. */
+export async function setRunHidden({ me, runId, hidden }) {
+  if (!configured || !me || !runId) return false;
+  const { error } = await supabase.rpc("set_run_hidden", { uid: me, p_run: runId, p_hidden: Boolean(hidden) });
+  if (error) return fail(error, false);
+  return true;
+}
+
 /** Hands it in. The time and the name are decided there, not here. */
 export async function finishRun({ me, runId, score }) {
   if (!configured || !me || !runId) return null;
@@ -51,9 +59,12 @@ const toRow = (r) => ({
   userId: r.user_id,
   callsign: r.callsign,
   account: r.code,
-  score: Number(r.score),
+  /* null when its owner has hidden the attempt (0044): withheld by the server,
+     so a number here is a number somebody chose to show. */
+  score: r.score == null ? null : Number(r.score),
   total: Number(r.total),
-  seconds: Number(r.seconds),
+  seconds: r.seconds == null ? null : Number(r.seconds),
+  hidden: Boolean(r.hidden),
   isYou: !!r.is_you,
   /* Shaped for stampOf, which is the one thing allowed to read a stamp row. */
   profile: {

@@ -76,8 +76,8 @@ export default function Leaderboard({ title, runs = [], total = 0, boardSize = 0
                   <span className="br__ac">[{r.account}]</span>
                   <span className="br__cs">{r.callsign}</span>
                 </span>
-                <span className="br__sc">{r.score}/{r.total || total}</span>
-                <span className="br__tm">{mmss(r.seconds)}</span>
+                <span className="br__sc">{r.score == null ? "–" : `${r.score}/${r.total || total}`}</span>
+                <span className="br__tm">{r.seconds == null ? "–" : mmss(r.seconds)}</span>
               </li>
           ))}
         </ol>

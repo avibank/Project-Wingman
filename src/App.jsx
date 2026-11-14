@@ -2445,6 +2445,7 @@ function AppInner() {
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapter={ch} state={moduleState}
                 me={me}
+                onOpenPerson={openPilot}
                 /* Rule 2 of the quiz-stamps brief: the student's own stamp
                    leads the result, where the plane glyph used to be. */
                 myStamp={myStamp}

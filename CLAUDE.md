@@ -212,6 +212,28 @@ with the same correct text.
     `fill: forwards` and was never cancelled, so the next set's card (the SAME
     node) stayed at opacity 0, blank on Missed and blank coming back. `test:cards`
     asserts both now (135 → 145), proved by planting each.
+- **THE QUIZ HUB AND THE EYE (2026-11-14, migration 0044).** A quiz opens on
+  `QuizHub.jsx` before the paper: facts, your best run as a dial with grade /
+  time / place tiles, a podium for places 1-3 (ranked, never scored), seven dots
+  for 4-10 and only ten ever appear, then Start and the study cards. Unmarked
+  shows the HOUSE stamp, never the student's own; an empty board is metal seals,
+  not a shimmer (a shimmer reads as a failed load). Grades: F under 75, B- 75,
+  B 80, B+ 85, A- 90, A 94 (`gradeOf`, held by `check:quiz-stamps`). **The dial
+  says "Your best" because the board rows carry no timestamp** — the true latest
+  needs `quiz_leaderboard` to return `submitted_at`.
+  - **THE EYE HIDES A RUN'S SCORE, GRADE AND TIME FROM OTHERS, and the server is
+    what withholds it**: `quiz_runs.hidden`, `set_run_hidden`, and
+    `quiz_leaderboard` returning NULL score and seconds for a hidden run that is
+    not yours. Rank, callsign and stamp still show. On by default (nothing is
+    hidden until pressed). Tapping a person shows their numbers, or opens the
+    profile sheet when they are hidden. Run 0044 AFTER the deploy: an old client
+    ignores `hidden`, and the new one tolerates its absence.
+  - **Every test that opens a quiz presses Start first** (`[data-hub="start"]`);
+    `test:exam`, `test:vt` and `test:bm` do it, and `test:vt`'s Module → Quiz
+    step no longer expects the root to dissolve (the backdrop changes at Start,
+    inside the screen). Generic class names collide with the app's globals
+    (`.seal`, `.dot` painted a blue square and blue dots): the hub's are all
+    `qh-` prefixed.
 - **STUDY CARDS ARE OPEN-ENDED FROM HERE ON, AND 13d'S ARE LEFT AS THEY WERE**
   (owner, 2026-11-14: "keep the appearance and how they work but cater them to
   feature open ended questions from now on, keep a older version simply to
