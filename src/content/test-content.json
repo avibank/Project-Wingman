@@ -36298,6 +36298,568 @@
      "batch": 1,
      "ref": "13.4",
      "pages": "1–117"
+    },
+    {
+     "id": "M2.V2",
+     "name": "Communication",
+     "cardsName": "Batch 02 · Study Cards · pages 118–200",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V2.QZ",
+      "name": "Batch 02 · Mock Exam · pages 118–200",
+      "questions": [
+       {
+        "id": "M2.V2.Q1",
+        "question": "What is a frequency synthesizer?",
+        "options": [
+         "A module that mixes reference oscillator frequencies into many outputs",
+         "An oscillator that uses a separate crystal for every channel",
+         "A circuit that converts FM into AM before the detector"
+        ],
+        "correct": 0,
+        "explain": "A synthesizer mixes frequencies from a reference oscillator to make many output frequencies."
+       },
+       {
+        "id": "M2.V2.Q2",
+        "question": "What advantage does transistor base modulation have over diode modulation?",
+        "options": [
+         "Less power needed for the modulation",
+         "Extra amplification of the modulated RF signal",
+         "A simpler circuit with fewer parts"
+        ],
+        "correct": 1,
+        "explain": "Base modulation also amplifies the modulated RF signal."
+       },
+       {
+        "id": "M2.V2.Q3",
+        "question": "What is a transmitter?",
+        "options": [
+         "A unit that converts sound waves into electrical signals",
+         "A unit that receives and demodulates HF oscillations",
+         "A unit that generates, modulates and amplifies HF oscillations"
+        ],
+        "correct": 2,
+        "explain": "A transmitter generates, modulates and amplifies HF oscillations for wireless transmission."
+       },
+       {
+        "id": "M2.V2.Q4",
+        "question": "What is the advantage of digital over analogue technology?",
+        "options": [
+         "A wider bandwidth and more output power",
+         "Much higher immunity and better processing in computers",
+         "Lower cost and much simpler antennas"
+        ],
+        "correct": 1,
+        "explain": "Digital gives much higher immunity and better processing in computer circuits."
+       },
+       {
+        "id": "M2.V2.Q5",
+        "question": "What does AFC do?",
+        "options": [
+         "Keeps the received amplitude constant",
+         "Makes unmodulated transmissions audible",
+         "Keeps the receiver tuned to the selected station"
+        ],
+        "correct": 2,
+        "explain": "AFC keeps the receiver tuned to the selected station."
+       },
+       {
+        "id": "M2.V2.Q6",
+        "question": "How does a double superhet suppress image frequencies?",
+        "options": [
+         "It has two mixers",
+         "It uses a lower IF",
+         "It has no local oscillator"
+        ],
+        "correct": 0,
+        "explain": "The double superhet uses two mixers to suppress image frequencies."
+       },
+       {
+        "id": "M2.V2.Q7",
+        "question": "What happens to the carrier and sidebands in the non-linear part of the AM detector?",
+        "options": [
+         "They mix, which recovers the information signal",
+         "They are both amplified by the same amount",
+         "They cancel each other out completely"
+        ],
+        "correct": 0,
+        "explain": "Because the AM spectrum holds the carrier and sidebands, they mix on the non-linear curve and fs is recovered."
+       },
+       {
+        "id": "M2.V2.Q8",
+        "question": "Which oscillators are used when very high frequency stability is needed?",
+        "options": [
+         "Meissner oscillators",
+         "RC oscillators",
+         "Crystal oscillators"
+        ],
+        "correct": 2,
+        "explain": "For very high frequency stability, crystal oscillators are used."
+       },
+       {
+        "id": "M2.V2.Q9",
+        "question": "Why is PAM NOT suitable for long-distance transmission?",
+        "options": [
+         "It cannot be multiplexed",
+         "It needs too much bandwidth",
+         "Interference affects the amplitude"
+        ],
+        "correct": 2,
+        "explain": "Interference changes the pulse amplitude, which carries the information."
+       },
+       {
+        "id": "M2.V2.Q10",
+        "question": "Which oscillator uses a crystal at its parallel resonant frequency?",
+        "options": [
+         "The Colpitts oscillator",
+         "The Hartley oscillator",
+         "The Meissner oscillator"
+        ],
+        "correct": 0,
+        "explain": "In a Colpitts oscillator the crystal replaces the parallel resonant circuit and works at its parallel resonant frequency."
+       },
+       {
+        "id": "M2.V2.Q11",
+        "question": "Which two parts can be used to produce FM?",
+        "options": [
+         "A capacitor microphone or a capacitor diode (varicap)",
+         "A diode detector or a low-pass filter",
+         "A crystal or a ceramic filter"
+        ],
+        "correct": 0,
+        "explain": "FM can be made with a capacitor microphone or a capacitor diode."
+       },
+       {
+        "id": "M2.V2.Q12",
+        "question": "What is modulation?",
+        "options": [
+         "Varying a low-frequency signal with an HF carrier",
+         "Varying a feature of an HF carrier with a low-frequency signal",
+         "Mixing two HF signals from the same band"
+        ],
+        "correct": 1,
+        "explain": "Modulation varies a characteristic of a high-frequency carrier by a low-frequency signal."
+       },
+       {
+        "id": "M2.V2.Q13",
+        "question": "What is commonly used to generate oscillations?",
+        "options": [
+         "Inductor-capacitor combinations (resonant circuits)",
+         "Resistor-diode combinations",
+         "Transformer-rectifier combinations"
+        ],
+        "correct": 0,
+        "explain": "LC combinations, that is resonant circuits, are common for generating oscillations."
+       },
+       {
+        "id": "M2.V2.Q14",
+        "question": "What are the major sub-assemblies of a transmitter?",
+        "options": [
+         "RF amplifier, local oscillator, mixer and filter",
+         "Mixer, IF amplifier, detector and loudspeaker",
+         "Oscillator, modulator, power amplifier and antenna"
+        ],
+        "correct": 2,
+        "explain": "The main parts are the oscillator, modulator, power amplifier and antenna."
+       },
+       {
+        "id": "M2.V2.Q15",
+        "question": "Which components does modulation always take place on?",
+        "options": [
+         "Linear components",
+         "Non-linear components",
+         "Purely resistive components"
+        ],
+        "correct": 1,
+        "explain": "Modulation always occurs on non-linear components."
+       },
+       {
+        "id": "M2.V2.Q16",
+        "question": "What are the advantages of digital demodulators?",
+        "options": [
+         "Fewer analogue parts, better quality and updates by software",
+         "Lower quality, but cheaper and simpler hardware",
+         "More analogue parts and a design that cannot be changed"
+        ],
+        "correct": 0,
+        "explain": "They need fewer analogue parts, give better quality and can be updated by software."
+       },
+       {
+        "id": "M2.V2.Q17",
+        "question": "Why does a digital signal keep its signal-to-noise ratio over long distances?",
+        "options": [
+         "It uses a higher carrier frequency",
+         "It is regenerated at each stage",
+         "It uses less bandwidth"
+        ],
+        "correct": 1,
+        "explain": "Digital signals are generated again at each stage, so the ratio stays the same."
+       },
+       {
+        "id": "M2.V2.Q18",
+        "question": "What is the piezo-effect?",
+        "options": [
+         "Pressure or pull on a crystal produces an electrical voltage",
+         "Heat on a crystal makes its frequency rise",
+         "Light on a crystal makes a current flow"
+        ],
+        "correct": 0,
+        "explain": "Pressure or pull on the crystal surface displaces charge and produces a voltage."
+       },
+       {
+        "id": "M2.V2.Q19",
+        "question": "How does a high IF help against image frequencies?",
+        "options": [
+         "It makes the image frequency stronger",
+         "It moves the image frequency outside the reception range",
+         "It lowers the local oscillator frequency"
+        ],
+        "correct": 1,
+        "explain": "A high IF puts the image frequency outside the receiving range."
+       },
+       {
+        "id": "M2.V2.Q20",
+        "question": "How does a PLL synthesizer solve the harmonic problem?",
+        "options": [
+         "It uses a separate crystal for every output channel",
+         "It uses two oscillators: a reference oscillator and a VCO",
+         "It uses a much higher reference frequency"
+        ],
+        "correct": 1,
+        "explain": "A reference oscillator and a VCO together form a phase locked loop."
+       },
+       {
+        "id": "M2.V2.Q21",
+        "question": "What is frequency modulation?",
+        "options": [
+         "Varying the carrier amplitude by the information signal",
+         "Varying the pulse phase by the information signal",
+         "Varying the carrier frequency by the information signal"
+        ],
+        "correct": 2,
+        "explain": "FM varies the carrier frequency fc by the signal fs."
+       },
+       {
+        "id": "M2.V2.Q22",
+        "question": "What keying frequency gives satisfactory pulse modulation quality?",
+        "options": [
+         "At least equal to the information frequency",
+         "At least half the information frequency",
+         "At least three times the information frequency"
+        ],
+        "correct": 2,
+        "explain": "The keying frequency must be at least three times the information frequency."
+       },
+       {
+        "id": "M2.V2.Q23",
+        "question": "Which AM transmitter power gives the same reception as a 100 W SSB transmitter?",
+        "options": [
+         "200 W",
+         "400 W",
+         "100 W"
+        ],
+        "correct": 1,
+        "explain": "With good conditions, 100 W of SSB matches 400 W of AM."
+       },
+       {
+        "id": "M2.V2.Q24",
+        "question": "What is the disadvantage of a TRF receiver?",
+        "options": [
+         "Image frequencies created by the mixer",
+         "The high cost of the IF filter",
+         "Low selectivity, so adjacent stations interfere"
+        ],
+        "correct": 2,
+        "explain": "TRF receivers have low selectivity."
+       },
+       {
+        "id": "M2.V2.Q25",
+        "question": "Which new frequencies does amplitude modulation create?",
+        "options": [
+         "2fc and 3fc, the carrier harmonics",
+         "fc + fs and fc − fs, the side frequencies",
+         "fs + 455 kHz, the intermediate frequency"
+        ],
+        "correct": 1,
+        "explain": "AM creates fc + fs and fc − fs, called the side frequencies."
+       },
+       {
+        "id": "M2.V2.Q26",
+        "question": "How does superposition differ from modulation?",
+        "options": [
+         "Superposition makes no new frequencies; modulation does",
+         "Neither of them makes any new frequencies",
+         "Superposition makes new frequencies; modulation does not"
+        ],
+        "correct": 0,
+        "explain": "Superposition creates no new frequencies; modulation creates new ones."
+       },
+       {
+        "id": "M2.V2.Q27",
+        "question": "What does a Hartley oscillator tap to get its feedback?",
+        "options": [
+         "The secondary winding of a transformer",
+         "The inductance of the resonant circuit",
+         "The capacitance of the resonant circuit"
+        ],
+        "correct": 1,
+        "explain": "The Hartley oscillator taps the inductance of the resonant circuit."
+       },
+       {
+        "id": "M2.V2.Q28",
+        "question": "What is a TRF receiver?",
+        "options": [
+         "One that uses two mixers and two oscillators",
+         "One that changes every frequency into a fixed IF",
+         "One where the frequency is not changed between antenna and detector"
+        ],
+        "correct": 2,
+        "explain": "In a TRF receiver the frequency is not changed between antenna and detector."
+       },
+       {
+        "id": "M2.V2.Q29",
+        "question": "What does the mixer do?",
+        "options": [
+         "Converts the variable antenna frequency into a fixed IF",
+         "Converts the audio into a modulated carrier",
+         "Converts the IF back into audio"
+        ],
+        "correct": 0,
+        "explain": "The mixer turns the variable input frequency into a fixed IF."
+       },
+       {
+        "id": "M2.V2.Q30",
+        "question": "How does the simplest FM demodulator recover the signal?",
+        "options": [
+         "By counting the carrier cycles",
+         "By turning amplitude changes into frequency changes",
+         "By turning frequency changes into amplitude changes"
+        ],
+        "correct": 2,
+        "explain": "It converts frequency variations into amplitude changes."
+       },
+       {
+        "id": "M2.V2.Q31",
+        "question": "What makes a modulation digital?",
+        "options": [
+         "The modulated parameter can take every value",
+         "The modulated parameter can only take discrete values",
+         "The carrier is switched off completely"
+        ],
+        "correct": 1,
+        "explain": "Analogue allows every value; digital only discrete values."
+       },
+       {
+        "id": "M2.V2.Q32",
+        "question": "What is pulse modulation?",
+        "options": [
+         "Radiating the carrier as short pulses that carry the information",
+         "Radiating only the sidebands of an AM signal",
+         "Radiating a continuous carrier at a constant amplitude"
+        ],
+        "correct": 0,
+        "explain": "Pulse modulation sends the carrier as a series of short pulses holding the information."
+       },
+       {
+        "id": "M2.V2.Q33",
+        "question": "When is it called modulation rather than mixing?",
+        "options": [
+         "When carrier and information are far apart, like HF and AF",
+         "When both frequencies are exactly the same",
+         "When both frequencies come from the same frequency band"
+        ],
+        "correct": 0,
+        "explain": "Far apart (HF and AF) is modulation; the same band is mixing."
+       },
+       {
+        "id": "M2.V2.Q34",
+        "question": "Which IF can AFC work with?",
+        "options": [
+         "Only an AM IF",
+         "Only an FM IF",
+         "Both AM and FM IF"
+        ],
+        "correct": 1,
+        "explain": "AFC is only possible with an FM IF."
+       },
+       {
+        "id": "M2.V2.Q35",
+        "question": "What does an oscillator consist of?",
+        "options": [
+         "Amplifier, frequency selector, positive feedback and limiter",
+         "Rectifier, filter, negative feedback and limiter",
+         "Amplifier, mixer, negative feedback and detector"
+        ],
+        "correct": 0,
+        "explain": "An oscillator has an amplifier, a frequency generator or selector, a positive feedback loop and an amplitude limiter."
+       },
+       {
+        "id": "M2.V2.Q36",
+        "question": "What determines the bandwidth of AM?",
+        "options": [
+         "The power of the transmitter",
+         "The frequency of the carrier",
+         "The maximum frequency of the information signal"
+        ],
+        "correct": 2,
+        "explain": "AM bandwidth is set by the highest information frequency."
+       },
+       {
+        "id": "M2.V2.Q37",
+        "question": "What determines the pulse modulation frequency spectrum?",
+        "options": [
+         "The modulation index and the deviation",
+         "The pulse period and the pulse shape",
+         "The carrier amplitude and the antenna length"
+        ],
+        "correct": 1,
+        "explain": "The spectrum is set by the pulse period time and pulse shape."
+       },
+       {
+        "id": "M2.V2.Q38",
+        "question": "What do the low-pass and high-pass filters at the AM detector output do?",
+        "options": [
+         "Low-pass removes the HF, high-pass blocks the DC",
+         "Low-pass blocks the DC, high-pass removes the HF",
+         "Both of them remove the audio signal"
+        ],
+        "correct": 0,
+        "explain": "The low-pass suppresses high frequencies; the high-pass blocks the DC."
+       },
+       {
+        "id": "M2.V2.Q39",
+        "question": "How does the bit error rate of QPSK compare with BPSK?",
+        "options": [
+         "It is lower",
+         "It is the same",
+         "It is higher"
+        ],
+        "correct": 2,
+        "explain": "QPSK has a higher bit error rate than BPSK."
+       },
+       {
+        "id": "M2.V2.Q40",
+        "question": "How does the bandwidth of QPSK compare with BPSK?",
+        "options": [
+         "It is double",
+         "It is the same",
+         "It is half"
+        ],
+        "correct": 2,
+        "explain": "QPSK needs only half the BPSK bandwidth."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V2.C001",
+       "front": "How does a transmitter turn a signal into a radio wave?",
+       "back": "A transmitter **generates**, **modulates** and **amplifies** HF oscillations. Its main parts are the **oscillator**, **modulator**, **power amplifier** and **antenna**."
+      },
+      {
+       "id": "M2.V2.C002",
+       "front": "What does an oscillator need to keep oscillating?",
+       "back": "An **amplifier**, a **frequency selector**, a **positive feedback loop** and an **amplitude limiter**."
+      },
+      {
+       "id": "M2.V2.C003",
+       "front": "How do you get very high frequency stability from an oscillator?",
+       "back": "Use a **crystal oscillator**. For variable frequencies, use a **crystal for each frequency** or a **frequency synthesizer**."
+      },
+      {
+       "id": "M2.V2.C004",
+       "front": "How do the Meissner, Hartley and Colpitts oscillators differ?",
+       "back": "They differ in their feedback. **Meissner**: feedback through a **transformer**. **Hartley**: **tapped inductance**. **Colpitts**: **divided capacitance**."
+      },
+      {
+       "id": "M2.V2.C005",
+       "front": "Why does a crystal make such a good oscillator?",
+       "back": "Pressure on a crystal makes a voltage (**piezo-effect**), and an AC voltage makes it **oscillate mechanically**. That is why **crystals are used as oscillators** in communication systems."
+      },
+      {
+       "id": "M2.V2.C006",
+       "front": "How does a PLL synthesizer keep its output accurate?",
+       "back": "A **reference oscillator** and a **VCO** form a **phase locked loop**. When the **phase difference is zero**, the DC is constant and the VCO's frequency and phase match."
+      },
+      {
+       "id": "M2.V2.C007",
+       "front": "How do superposition, modulation and mixing differ?",
+       "back": "**Superposition**: linear parts, **no new frequencies**. **Modulation**: non-linear parts, **new frequencies**, with frequencies far apart (HF and AF). **Mixing**: frequencies **close together**."
+      },
+      {
+       "id": "M2.V2.C008",
+       "front": "Why is the information put on a high-frequency carrier?",
+       "back": "The **low-frequency signal** holds the information, so it is used to **vary the HF carrier**. In the receiver the carrier is **demodulated** to get the information back."
+      },
+      {
+       "id": "M2.V2.C009",
+       "front": "How does AM change the frequency spectrum?",
+       "back": "It creates the **side frequencies fc + fs and fc − fs**. The bandwidth is set by the **highest information frequency**."
+      },
+      {
+       "id": "M2.V2.C010",
+       "front": "Why is SSB better than AM?",
+       "back": "Dropping one sideband **halves the bandwidth**, so **twice as many transmitters** fit. **100 W of SSB** gives the same reception as **400 W of AM**, and a suppressed carrier **cannot fade**."
+      },
+      {
+       "id": "M2.V2.C011",
+       "front": "How do diode, base and collector modulation compare?",
+       "back": "**Diode**: simple, but **loses RF energy**. **Base**: also **amplifies** the RF. **Collector**: **more efficient**, but needs **more modulation power**."
+      },
+      {
+       "id": "M2.V2.C012",
+       "front": "How does FM differ from AM?",
+       "back": "FM varies the carrier **frequency**; AM varies its **amplitude**. FM can be produced with a **capacitor microphone** or a **capacitor diode**."
+      },
+      {
+       "id": "M2.V2.C013",
+       "front": "Why is digital modulation taking over?",
+       "back": "It has **much higher immunity** and is easier to **process in computers**. The signal is **regenerated at each stage**, so the signal-to-noise ratio stays the same."
+      },
+      {
+       "id": "M2.V2.C014",
+       "front": "How do ASK, FSK and PSK differ?",
+       "back": "They are the digital (**keying**) forms of AM, FM and phase modulation, using only **discrete values**. **FSK** is used for **paging**; **PSK** is the basis of **SATCOM** and **Mode-S**."
+      },
+      {
+       "id": "M2.V2.C015",
+       "front": "How does QPSK compare with BPSK?",
+       "back": "QPSK uses **four phase states** and **dibits I and Q**. It needs **half the bandwidth** of BPSK, but has a **higher bit error rate**."
+      },
+      {
+       "id": "M2.V2.C016",
+       "front": "What are the different pulse modulation types used for?",
+       "back": "**PAM**: older telephones, NOT long distance. **PLM**: **fuel injection**. **PPM**: **model aircraft servos**. **PCM**: **digital audio and phones**. All allow **multiplexing**."
+      },
+      {
+       "id": "M2.V2.C017",
+       "front": "How does a superhet improve on a TRF receiver?",
+       "back": "A TRF has **low selectivity**. A superhet changes every frequency into a **fixed IF** (typically **455 kHz** for AM), which gives **channel selection**."
+      },
+      {
+       "id": "M2.V2.C018",
+       "front": "Why use a double superhet?",
+       "back": "Its **two mixers** suppress **image frequencies**. The **1st local oscillator** decides which station is received."
+      },
+      {
+       "id": "M2.V2.C019",
+       "front": "How are image frequencies kept out of a superhet?",
+       "back": "Mixing always creates **image frequencies** from neighbouring stations. A **high IF** moves them **outside the reception range**."
+      },
+      {
+       "id": "M2.V2.C020",
+       "front": "How do AFC, BFO and AGC differ?",
+       "back": "**AFC** keeps the receiver **tuned** (FM IF only). **BFO** makes **unmodulated or keyed** signals audible, at IF ± 1020 Hz. **AGC** keeps the received **amplitude constant**."
+      },
+      {
+       "id": "M2.V2.C021",
+       "front": "How are AM and FM signals demodulated?",
+       "back": "**AM**: filters clean the IF, the detector recovers fs, a **low-pass removes HF** and a **high-pass blocks DC**. **FM**: frequency changes are first **turned into amplitude changes**."
+      }
+     ],
+     "batch": 2,
+     "ref": "13.4",
+     "pages": "118–200"
     }
    ],
    "downloads": [
@@ -36306,6 +36868,12 @@
      "title": "Batch 01 · Full Bank · pages 1–117",
      "file": "downloads/M13e-Batch-1-Full-Bank-pages-1-117.pdf",
      "pages": 60
+    },
+    {
+     "id": "M2.V2.DL1",
+     "title": "Batch 02 · Full Bank · pages 118–200",
+     "file": "downloads/M13e-Batch-2-Full-Bank-pages-118-200.pdf",
+     "pages": 41
     }
    ],
    "batches": 16
