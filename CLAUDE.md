@@ -175,6 +175,50 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
+**13e BATCH 2 WENT IN ON 2026-11-15** (owner: "add those as batch 2 use 13d as
+ref for how it should work"). Chapter **`M2.V2`** — checked against every M2 id
+this repo has ever carried (`M2.01`-`M2.03`, `M2.P1`-`M2.P7`, `M2.V1`) — name
+"Communication" like batch 1, ref 13.4, pages **118–200**, batch 2 of the
+module's declared 16. **Quiz 40** (14/13/13), **cards 21, open-ended**, every
+one carrying a marked key term, **paper 41pp** (the 202-question Full Bank,
+the download, not loaded as cards). Zero author notes to strip, every exam
+stem found in the bank with the same correct text.
+
+**THE PAGE RANGES TILE**, as 13d's do: 1–117 then 118–200, no gap and no
+overlap. Both chapters are called "Communication" — the documents' own title —
+and the row prints the name, the ref and the range, so they are told apart the
+way 13d's three "Autoflight (ATA 22)" batches are.
+
+**THE IMPORTER TAKES THE BATCH AS AN ARGUMENT NOW, and nothing about a batch
+is typed into it.** It was hard-coded to batch 1 — the six filenames, `M2.V1`,
+the range and the paper's name all written out — so batch 2 would have been a
+SECOND COPY of the file to drift against the first. The six files are now
+FOUND by pattern (which can say which one is missing, where a composed name
+gives a bare ENOENT), the range is read off their names and **cross-checked
+against the `master_pages` each document declares**, and the chapter is
+`M2.V<batch>`. Either half alone is a single point of failure: a file renamed
+by hand imports under the wrong range, and a stale `master_pages` prints a
+range a student cannot find in the manual.
+- **The generalisation was proved by re-running batch 1**, which reproduced
+  the content document and the paper BYTE FOR BYTE. That is the whole test,
+  and it is cheaper than reading the diff.
+- **AND IT WAS APPENDING RATHER THAN RESTORING POSITION, which the second
+  batch is what makes visible.** A re-run FILTERS its own chapter out and
+  PUSHES the new one, so importing batch 1 after batch 2 left the module as
+  [2, 1] — found by re-running batch 1 and noticing it had moved batch 2.
+  **A chapter's POSITION is an address**: the card set is
+  `/m/<mod>/library/cards/<n>` where n is the 1-based index (App's
+  `onOpenCards`, `content.cardSet`, `cardChapters`), so the swap silently
+  points every bookmarked or shared card-set link at the wrong batch. Ids are
+  safe — cards and questions carry their own, so `pw-cards-seen`,
+  `pw-cards-got` and every `saves` row are keyed to the content — but the URL
+  is not, and no gate watches it. Both arrays are SORTED by batch at the end
+  now, so the order is a property of the document rather than of the sequence
+  of runs that built it: importing 2-then-1 and 1-then-2 give byte-identical
+  documents.
+- Purely ADDITIVE: `M2.V2` never existed, so no progress can point at it —
+  no reset, and `STORAGE_EPOCH` is untouched.
+
 **MODULE 13e BATCH 1 WENT IN ON 2026-11-12, FROM A THIRD DOCUMENT SHAPE**: a
 PDF **and a JSON sidecar** for each of Exam, Full Bank and Study Cards
 (`M13e-01-*-pages-1-117`). `scripts/m13e/import.mjs` reads the JSON, so nothing
