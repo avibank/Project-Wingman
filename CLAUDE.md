@@ -175,6 +175,25 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
+**13e BATCHES 3 AND 4 WENT IN ON 2026-11-18** (owner: "push those as batch 3
+and 4"). `M2.V3` pages **201–302** — quiz 40 (14/13/13), **20** open-ended
+cards, paper **41pp** from a 198-question bank — and `M2.V4` pages **303–435**
+— quiz 40 (14/13/13), **22** cards, paper **35pp** from 188. Both ids confirmed
+new by a pickaxe search across every ref. **Four of sixteen batches have
+landed and the ranges still tile**: 1–117, 118–200, 201–302, 303–435.
+- **The generalised importer did the whole job**: two runs, no edits, zero
+  refusals, every exam stem found in its bank with the same correct text and
+  every card carrying a marked key term. That is what the batch-2
+  generalisation was for.
+- The owner said "201 to 303 as batch 3"; the documents say 201–302, and the
+  importer's filename-against-`master_pages` check is what settles it. 303 is
+  where batch 4 starts, so the ranges tile either way.
+- Purely ADDITIVE again — no reset, `STORAGE_EPOCH` untouched.
+- **Two malformed git refs were deleted on the way through**: `main 2` under
+  both `refs/heads` and `refs/remotes/origin`, which made `git rev-list --all`
+  and every history sweep die with `fatal: bad object`. The id check had to be
+  done with `git log -S` until they were gone.
+
 **13e BATCH 2 WENT IN ON 2026-11-15** (owner: "add those as batch 2 use 13d as
 ref for how it should work"). Chapter **`M2.V2`** — checked against every M2 id
 this repo has ever carried (`M2.01`-`M2.03`, `M2.P1`-`M2.P7`, `M2.V1`) — name

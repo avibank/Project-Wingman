@@ -36860,6 +36860,1130 @@
      "batch": 2,
      "ref": "13.4",
      "pages": "118–200"
+    },
+    {
+     "id": "M2.V3",
+     "name": "Communication",
+     "cardsName": "Batch 03 · Study Cards · pages 201–302",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V3.QZ",
+      "name": "Batch 03 · Mock Exam · pages 201–302",
+      "questions": [
+       {
+        "id": "M2.V3.Q1",
+        "question": "What advantage does VHF give over HF for reception?",
+        "options": [
+         "No atmospherics, day and night",
+         "Worldwide range by sky waves",
+         "No antenna needed at all"
+        ],
+        "correct": 0,
+        "explain": "VHF allows reception without atmospherics day and night."
+       },
+       {
+        "id": "M2.V3.Q2",
+        "question": "What does the active window of the RMP show?",
+        "options": [
+         "The frequency of the last ground station",
+         "The operating frequency of the selected system",
+         "The new frequency that has just been selected"
+        ],
+        "correct": 1,
+        "explain": "The active (left) window shows the operating frequency."
+       },
+       {
+        "id": "M2.V3.Q3",
+        "question": "How does SELCAL reduce the pilot's workload?",
+        "options": [
+         "It turns the radios off when they are not needed",
+         "It answers ATC calls automatically for the crew",
+         "The ground calls the aircraft selectively, so no constant listening"
+        ],
+        "correct": 2,
+        "explain": "The ground calls the aircraft selectively, with cockpit signals, so constant monitoring is not needed."
+       },
+       {
+        "id": "M2.V3.Q4",
+        "question": "When does the squelch cut the audio from the demodulator?",
+        "options": [
+         "When the pilot presses the push-to-talk button",
+         "When the AGC voltage is very high, meaning a weak signal",
+         "When the AGC voltage is very low, meaning a strong signal"
+        ],
+        "correct": 1,
+        "explain": "A very high AGC voltage means a weak input and loud noise, so a threshold switch cuts the audio."
+       },
+       {
+        "id": "M2.V3.Q5",
+        "question": "What is needed to keep the VHF antenna SWR within 5:1?",
+        "options": [
+         "A second λ/4 cable added to the antenna base",
+         "An anti-icing duct connected to the antenna",
+         "A good electrical bond between antenna base and structure"
+        ],
+        "correct": 2,
+        "explain": "A good electrical bond between base and structure keeps the SWR within 5:1."
+       },
+       {
+        "id": "M2.V3.Q6",
+        "question": "What does the second ground of the push-to-talk button do?",
+        "options": [
+         "Switches over from reception to transmission",
+         "Mutes the cabin loudspeakers",
+         "Tunes the antenna coupler"
+        ],
+        "correct": 0,
+        "explain": "The second ground handles the change-over from reception to transmission."
+       },
+       {
+        "id": "M2.V3.Q7",
+        "question": "Who mainly uses the service interphone?",
+        "options": [
+         "Maintenance personnel",
+         "Passengers",
+         "Cabin attendants"
+        ],
+        "correct": 0,
+        "explain": "The service interphone is used primarily by maintenance personnel."
+       },
+       {
+        "id": "M2.V3.Q8",
+        "question": "Which PA input has the highest priority?",
+        "options": [
+         "The boarding music",
+         "The purser",
+         "The cockpit crew"
+        ],
+        "correct": 2,
+        "explain": "The cockpit crew input has the highest priority."
+       },
+       {
+        "id": "M2.V3.Q9",
+        "question": "Which microphone has priority when the oxygen mask is in use?",
+        "options": [
+         "The handheld microphone",
+         "The boom set microphone",
+         "The oxygen mask microphone"
+        ],
+        "correct": 2,
+        "explain": "The oxygen mask microphone has priority over the boom set when the mask is in use."
+       },
+       {
+        "id": "M2.V3.Q10",
+        "question": "Why does an HF slot antenna need no lightning arrestor?",
+        "options": [
+         "Its wire screen is grounded to the structure",
+         "It is only used for reception, never transmit",
+         "It is made of plastic and cannot conduct"
+        ],
+        "correct": 0,
+        "explain": "The screen is bonded to the structure, so no arrestor is needed."
+       },
+       {
+        "id": "M2.V3.Q11",
+        "question": "What does the first ground of the push-to-talk button switch in?",
+        "options": [
+         "The microphone audio and its supply voltage",
+         "The cockpit loudspeaker muting",
+         "The antenna and the transmitter end stage"
+        ],
+        "correct": 0,
+        "explain": "One ground switches in the microphone signal and, at the same time, the supply voltage."
+       },
+       {
+        "id": "M2.V3.Q12",
+        "question": "How many VHF systems must an IFR aircraft have?",
+        "options": [
+         "One",
+         "Two",
+         "Three"
+        ],
+        "correct": 1,
+        "explain": "Aircraft licensed for IFR must have two VHF systems."
+       },
+       {
+        "id": "M2.V3.Q13",
+        "question": "How can HF radio contact be made?",
+        "options": [
+         "By sky waves or ground waves",
+         "By line of sight only",
+         "By satellite only"
+        ],
+        "correct": 0,
+        "explain": "HF contact is made by sky waves or ground waves."
+       },
+       {
+        "id": "M2.V3.Q14",
+        "question": "When does the PA amplifier first raise its volume?",
+        "options": [
+         "When the seatbelt sign comes on",
+         "When the aircraft takes off",
+         "When an engine is started"
+        ],
+        "correct": 2,
+        "explain": "The output increases when an engine is started, detected by the engine oil pressure switch."
+       },
+       {
+        "id": "M2.V3.Q15",
+        "question": "How can a ground mechanic talk to the cockpit, for example during push-back?",
+        "options": [
+         "Through the cabin interphone handset",
+         "Through a boom set connection near the nose gear",
+         "Through the passenger address system"
+        ],
+        "correct": 1,
+        "explain": "A mechanic can use a boom set connection near the nose gear."
+       },
+       {
+        "id": "M2.V3.Q16",
+        "question": "What type of antenna is the VHF COM antenna?",
+        "options": [
+         "A λ/4 rod antenna",
+         "A loop antenna",
+         "A λ/2 dipole"
+        ],
+        "correct": 0,
+        "explain": "The VHF COM antenna is a λ/4 rod antenna."
+       },
+       {
+        "id": "M2.V3.Q17",
+        "question": "What happens when the transfer button on an RMP is pressed?",
+        "options": [
+         "The standby frequency is erased",
+         "The standby and active frequencies swap windows",
+         "The active frequency is sent to all RMPs as standby"
+        ],
+        "correct": 1,
+        "explain": "The standby frequency becomes active and the active becomes standby."
+       },
+       {
+        "id": "M2.V3.Q18",
+        "question": "Which radios can a SELCAL decoder channel be connected to?",
+        "options": [
+         "A VHF or an HF system",
+         "Only the HF systems",
+         "Only the PA system"
+        ],
+        "correct": 0,
+        "explain": "Each decoder channel is connected to a VHF or HF system."
+       },
+       {
+        "id": "M2.V3.Q19",
+        "question": "What can the ACPs select for communication systems compared with navigation systems?",
+        "options": [
+         "Receive only for COM; transmit and receive for NAV",
+         "Transmit and receive for COM; receive only for NAV",
+         "Transmit only for COM; receive only for NAV"
+        ],
+        "correct": 1,
+        "explain": "COM systems can be selected for transmit and receive; NAV systems for reception only."
+       },
+       {
+        "id": "M2.V3.Q20",
+        "question": "How is a SELCAL call made?",
+        "options": [
+         "By sending a Morse code station identifier",
+         "By modulating the carrier with four audio tones",
+         "By sending a digital data word over ACARS"
+        ],
+        "correct": 1,
+        "explain": "A SELCAL call modulates the carrier with four consecutive audio frequencies."
+       },
+       {
+        "id": "M2.V3.Q21",
+        "question": "What can a VHF transceiver do at any one moment?",
+        "options": [
+         "Transmit and receive together",
+         "Only receive on 121.5 MHz",
+         "Either transmit or receive"
+        ],
+        "correct": 2,
+        "explain": "At any one time only transmission or reception is possible."
+       },
+       {
+        "id": "M2.V3.Q22",
+        "question": "What acts as the lightning arrestor in the VHF antenna?",
+        "options": [
+         "A spark gap in the base",
+         "A fuse in the coax line",
+         "A λ/4 cable in the antenna"
+        ],
+        "correct": 2,
+        "explain": "A λ/4 cable in the antenna acts as the lightning arrestor."
+       },
+       {
+        "id": "M2.V3.Q23",
+        "question": "Why does every flight deck oxygen mask have a built-in microphone?",
+        "options": [
+         "To record the crew's breathing for the CVR",
+         "To keep communication possible in an emergency",
+         "To control the oxygen flow by voice"
+        ],
+        "correct": 1,
+        "explain": "The mask microphone ensures communication in an emergency."
+       },
+       {
+        "id": "M2.V3.Q24",
+        "question": "What does HF sky wave range and quality depend on?",
+        "options": [
+         "The aircraft's altitude",
+         "The ground conductivity",
+         "The condition of the ionosphere"
+        ],
+        "correct": 2,
+        "explain": "Sky wave range and quality depend on the condition of the ionosphere."
+       },
+       {
+        "id": "M2.V3.Q25",
+        "question": "What does the Audio Management Unit (AMU) connect?",
+        "options": [
+         "The flight data recorder with the cockpit voice recorder",
+         "The crew's audio equipment with the radio and navigation systems",
+         "The radio management panels with the antennas"
+        ],
+        "correct": 1,
+        "explain": "The AMU connects the crew's audio equipment with the communication and navigation systems."
+       },
+       {
+        "id": "M2.V3.Q26",
+        "question": "Why has SELCAL become less important?",
+        "options": [
+         "ACARS data transmission is now widely used",
+         "Ground stations stopped transmitting codes",
+         "HF radio is no longer used"
+        ],
+        "correct": 0,
+        "explain": "SELCAL's importance has dropped as ACARS is widely used."
+       },
+       {
+        "id": "M2.V3.Q27",
+        "question": "Where is the SELCAL signal taken from in the VHF receiver?",
+        "options": [
+         "From the transmitter",
+         "In front of the squelch gate",
+         "After the audio amplifier"
+        ],
+        "correct": 1,
+        "explain": "The SELCAL output is picked off before the squelch gate, so weak signals still trigger it."
+       },
+       {
+        "id": "M2.V3.Q28",
+        "question": "Which modes can the HF system operate in?",
+        "options": [
+         "FM or SSB",
+         "FM or AM",
+         "AM or SSB"
+        ],
+        "correct": 2,
+        "explain": "The HF system can be operated in AM or SSB."
+       },
+       {
+        "id": "M2.V3.Q29",
+        "question": "What does the spring-loaded up position of the RT switch select?",
+        "options": [
+         "Transmission, the push-to-talk function",
+         "Reception from the selected system",
+         "Permanent flight interphone"
+        ],
+        "correct": 0,
+        "explain": "The spring-loaded up position selects transmission (PTT)."
+       },
+       {
+        "id": "M2.V3.Q30",
+        "question": "What does the SELCAL system give the crew?",
+        "options": [
+         "Automatic tuning of all the VHF radios",
+         "Voice contact with the cabin attendants",
+         "Visual and aural alerts from coded ground stations"
+        ],
+        "correct": 2,
+        "explain": "SELCAL gives visual and aural warnings from ground stations equipped with a coding device."
+       },
+       {
+        "id": "M2.V3.Q31",
+        "question": "What does the squelch gate in a VHF receiver do?",
+        "options": [
+         "Boosts weak signals so they can always be heard",
+         "Passes only strong enough signals, so no constant noise",
+         "Blocks the SELCAL tones from the audio output"
+        ],
+        "correct": 1,
+        "explain": "The squelch gate stops constant noise by passing only strong enough signals."
+       },
+       {
+        "id": "M2.V3.Q32",
+        "question": "What does HF ground wave range depend on?",
+        "options": [
+         "Ground conductivity and frequency",
+         "The state of the ionosphere only",
+         "The aircraft's altitude only"
+        ],
+        "correct": 0,
+        "explain": "Range depends on ground conductivity and frequency; lower frequencies reach further."
+       },
+       {
+        "id": "M2.V3.Q33",
+        "question": "What does VHF range depend on?",
+        "options": [
+         "The altitude of the aircraft",
+         "The season of the year",
+         "The time of day"
+        ],
+        "correct": 0,
+        "explain": "VHF range depends on the aircraft's altitude."
+       },
+       {
+        "id": "M2.V3.Q34",
+        "question": "What does the audio management system control?",
+        "options": [
+         "All navigation receiver tuning",
+         "All functions needed for crew communications",
+         "All cockpit voice recording"
+        ],
+        "correct": 1,
+        "explain": "The audio management system controls all functions needed for crew communications."
+       },
+       {
+        "id": "M2.V3.Q35",
+        "question": "Which other aircraft system can a high HF SWR affect?",
+        "options": [
+         "The autopilot",
+         "The landing gear",
+         "The fuel system"
+        ],
+        "correct": 0,
+        "explain": "A high SWR, for example from a faulty cable, can affect the autopilot through high field strengths."
+       },
+       {
+        "id": "M2.V3.Q36",
+        "question": "Which VHF system is on the emergency power supply?",
+        "options": [
+         "VHF 3",
+         "VHF 2",
+         "VHF 1"
+        ],
+        "correct": 2,
+        "explain": "VHF 1 is on the emergency power supply; the systems use 28 V DC."
+       },
+       {
+        "id": "M2.V3.Q37",
+        "question": "Why must the HF antenna be tuned before transmitting, unlike VHF?",
+        "options": [
+         "HF antennas are much shorter",
+         "The HF frequency range is much wider (about 1:15)",
+         "HF uses a much higher frequency"
+        ],
+        "correct": 1,
+        "explain": "HF varies about 1:15, VHF about 1:1.15, so HF needs tuning before transmission."
+       },
+       {
+        "id": "M2.V3.Q38",
+        "question": "What does the AMU do for transmission?",
+        "options": [
+         "Collects the microphone inputs and sends them to the selected transceivers",
+         "Collects the receiver outputs and sends them to the crew stations",
+         "Tunes the selected transceivers to their frequencies"
+        ],
+        "correct": 0,
+        "explain": "For transmission the AMU collects the microphone inputs and directs them to the selected transceivers."
+       },
+       {
+        "id": "M2.V3.Q39",
+        "question": "What drives the antenna coupler from STANDBY through TUNE to OPERATE?",
+        "options": [
+         "Selecting AM mode",
+         "Switching the HF system off and on",
+         "A short press of the PTT button"
+        ],
+        "correct": 2,
+        "explain": "A momentary PTT drives the coupler via TUNE to OPERATE."
+       },
+       {
+        "id": "M2.V3.Q40",
+        "question": "How many channels does 8.33 kHz channel spacing give?",
+        "options": [
+         "About 760",
+         "About 1000",
+         "More than 2000"
+        ],
+        "correct": 2,
+        "explain": "8.33 kHz spacing gives more than 2000 channels."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V3.C001",
+       "front": "How does the squelch keep the audio quiet when there is no real signal?",
+       "back": "When the signal is weak, the **AGC voltage is very high**, so a **threshold switch cuts the audio**."
+      },
+      {
+       "id": "M2.V3.C002",
+       "front": "What does each ground of the push-to-talk button do?",
+       "back": "The first ground switches in the **microphone audio and its supply**. The second switches from **reception to transmission**."
+      },
+      {
+       "id": "M2.V3.C003",
+       "front": "What does the Audio Management Unit do?",
+       "back": "It is the **heart of the audio system**: it connects the crew's audio equipment with the **radios, navigation systems and interphones**, and sends the audio to the **CVR**."
+      },
+      {
+       "id": "M2.V3.C004",
+       "front": "Which microphone wins when the oxygen mask is in use?",
+       "back": "The **oxygen mask microphone** has priority over the boom set, so communication works in an **emergency**."
+      },
+      {
+       "id": "M2.V3.C005",
+       "front": "What can the audio control panel select for COM and NAV systems?",
+       "back": "COM systems can be selected for **transmit and receive**; NAV systems for **reception only**."
+      },
+      {
+       "id": "M2.V3.C006",
+       "front": "What are the three positions of the RT switch?",
+       "back": "**Centre**: reception. **Spring-loaded up**: transmission (**PTT**). **Interphone**: microphones stay on the **flight interphone**."
+      },
+      {
+       "id": "M2.V3.C007",
+       "front": "How do the flight, cabin and service interphones differ?",
+       "back": "**Flight**: between the **cockpit crew** (and a ground mechanic at the nose gear). **Cabin**: cabin stations and cockpit. **Service**: **maintenance staff** at jacks around the aircraft."
+      },
+      {
+       "id": "M2.V3.C008",
+       "front": "How does the PA system decide whose announcement is heard?",
+       "back": "By **priority**: **cockpit** first, then the **purser**, other cabin crew, pre-recorded announcements, and **boarding music** last. **Chimes** always sound."
+      },
+      {
+       "id": "M2.V3.C009",
+       "front": "When does the PA system get louder?",
+       "back": "When an **engine is started**, and again when the **oxygen masks drop** after a decompression."
+      },
+      {
+       "id": "M2.V3.C010",
+       "front": "How do the active and standby windows on the RMP work?",
+       "back": "The **active** window shows the **operating** frequency; the **standby** window holds the **new** one. The **transfer button swaps** them."
+      },
+      {
+       "id": "M2.V3.C011",
+       "front": "What makes VHF COM suited to short-range communication?",
+       "back": "VHF gives **short-range**, line-of-sight contact with **no atmospherics**, day and night. Its **range depends on altitude**."
+      },
+      {
+       "id": "M2.V3.C012",
+       "front": "Why was 8.33 kHz channel spacing introduced?",
+       "back": "25 kHz spacing gave too few channels, so dividing by 3 gives **more than 2000 channels**. It is needed **above FL230**; **ACARS and Climax** stay on 25 kHz."
+      },
+      {
+       "id": "M2.V3.C013",
+       "front": "What does a typical VHF COM installation look like?",
+       "back": "IFR aircraft need **two VHF systems**, often with a **third for ACARS**. They use **AM**, **vertical polarization** and **28 V DC**, with **VHF 1 on emergency power**."
+      },
+      {
+       "id": "M2.V3.C014",
+       "front": "Why does the VHF antenna need no tuning, and how is noise kept out?",
+       "back": "The **frequency range is small** and the **sword antenna is wide band**. The **squelch gate** only passes strong enough signals; **SELCAL is taken before it**."
+      },
+      {
+       "id": "M2.V3.C015",
+       "front": "What are the key features of the VHF antenna?",
+       "back": "A **λ/4 rod** with a **T-shaped end**, **wide band**, **vertically polarized**. It needs a **good bond** to the structure, and a **λ/4 cable** acts as the **lightning arrestor**."
+      },
+      {
+       "id": "M2.V3.C016",
+       "front": "How does HF reach around the world?",
+       "back": "HF (**2–30 MHz**) uses **ground waves** (a few hundred km, further at low frequencies) and **sky waves**, which depend on the **ionosphere**."
+      },
+      {
+       "id": "M2.V3.C017",
+       "front": "Why must the HF antenna be tuned before transmitting?",
+       "back": "HF covers a **much wider range (about 1:15)** than VHF. The **antenna coupler** tunes and **matches** the antenna after a **short PTT**, with a **1 kHz tone** while it works."
+      },
+      {
+       "id": "M2.V3.C018",
+       "front": "How do you know an HF transmission is working?",
+       "back": "The **sidetone** is heard. A **missing sidetone** means a **Key Interlock Fault**."
+      },
+      {
+       "id": "M2.V3.C019",
+       "front": "How do HF rod and slot antennas differ?",
+       "back": "A **rod antenna** needs a **lightning arrestor**. A **slot antenna** is a **wire mesh on the fin's leading edge**, grounded to the structure, so it needs **no arrestor**."
+      },
+      {
+       "id": "M2.V3.C020",
+       "front": "How does SELCAL save the pilot from listening all the time?",
+       "back": "The ground station sends **four audio tones** (a **four-letter code**). The **decoder** checks them against the aircraft's code and gives a **visual and aural alert**."
+      }
+     ],
+     "batch": 3,
+     "ref": "13.4",
+     "pages": "201–302"
+    },
+    {
+     "id": "M2.V4",
+     "name": "Communication",
+     "cardsName": "Batch 04 · Study Cards · pages 303–435",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V4.QZ",
+      "name": "Batch 04 · Mock Exam · pages 303–435",
+      "questions": [
+       {
+        "id": "M2.V4.Q1",
+        "question": "Where is the SATCOM high gain antenna (HGA) mounted?",
+        "options": [
+         "On the top of the fuselage",
+         "On the bottom of the fuselage",
+         "Inside the nose radome"
+        ],
+        "correct": 0,
+        "explain": "The high gain antenna is mounted on top of the fuselage."
+       },
+       {
+        "id": "M2.V4.Q2",
+        "question": "Why does the 406 MHz signal give worldwide coverage?",
+        "options": [
+         "Geostationary satellites always see every ELT",
+         "The satellite stores the signal and passes it on later",
+         "The signal is strong enough to reach any ground station"
+        ],
+        "correct": 1,
+        "explain": "The stored signal is passed to a ground station later, so coverage is worldwide."
+       },
+       {
+        "id": "M2.V4.Q3",
+        "question": "Which satellites does SATCOM use?",
+        "options": [
+         "COSPAS/SARSAT satellites in low orbit",
+         "GPS satellites in medium orbit",
+         "INMARSAT satellites in geostationary orbit"
+        ],
+        "correct": 2,
+        "explain": "SATCOM uses INMARSAT satellites in geostationary orbit."
+       },
+       {
+        "id": "M2.V4.Q4",
+        "question": "How much of the flight does a solid-state CVR usually keep?",
+        "options": [
+         "The last 25 hours",
+         "The last 120 minutes",
+         "The last 30 minutes"
+        ],
+        "correct": 1,
+        "explain": "The digital solid-state recorder stores the last 120 minutes in memory."
+       },
+       {
+        "id": "M2.V4.Q5",
+        "question": "Where can a portable ELT be found?",
+        "options": [
+         "Inside the cockpit voice recorder",
+         "On the bottom of the fuselage",
+         "Near the life rafts or as a handheld unit"
+        ],
+        "correct": 2,
+        "explain": "The portable type is a buoyant ELT near the life rafts or a handheld transmitter."
+       },
+       {
+        "id": "M2.V4.Q6",
+        "question": "What kind of ACARS message is the load sheet report?",
+        "options": [
+         "An up link during take-off preparation",
+         "A manual report from the pilot",
+         "A down link after landing"
+        ],
+        "correct": 0,
+        "explain": "The load sheet is an up link to the aircraft during take-off preparation."
+       },
+       {
+        "id": "M2.V4.Q7",
+        "question": "How does the ACARS MU find the OOOI event times?",
+        "options": [
+         "From parameters such as door and gear sensors",
+         "From the ground station clock",
+         "From the pilot's manual entries only"
+        ],
+        "correct": 0,
+        "explain": "Parameters from the SDAC and FWCs (doors closed, gear compressed) give the OOOI times."
+       },
+       {
+        "id": "M2.V4.Q8",
+        "question": "How much of the flight does an analogue tape CVR keep?",
+        "options": [
+         "The whole flight",
+         "The last 120 minutes",
+         "The last 30 minutes"
+        ],
+        "correct": 2,
+        "explain": "The analogue tape recorder stores the last 30 minutes on an endless tape."
+       },
+       {
+        "id": "M2.V4.Q9",
+        "question": "What does SATCOM use instead of HF for long distances?",
+        "options": [
+         "VHF line-of-sight links",
+         "Ground waves along the surface",
+         "Satellites as relay stations"
+        ],
+        "correct": 2,
+        "explain": "SATCOM uses satellites as relays instead of HF."
+       },
+       {
+        "id": "M2.V4.Q10",
+        "question": "What type of device is the SATCOM high gain antenna?",
+        "options": [
+         "A phased array",
+         "A loop",
+         "A single rod"
+        ],
+        "correct": 0,
+        "explain": "The HGA is a phased array device."
+       },
+       {
+        "id": "M2.V4.Q11",
+        "question": "What type of system is COSPAS/SARSAT?",
+        "options": [
+         "A low earth orbit system",
+         "A ground radar system",
+         "A geostationary system"
+        ],
+        "correct": 0,
+        "explain": "COSPAS/SARSAT is a low earth orbit (LEOSAR) system."
+       },
+       {
+        "id": "M2.V4.Q12",
+        "question": "What is the transmit power of a 406 MHz ELT?",
+        "options": [
+         "75 mW",
+         "5 W",
+         "700 mW"
+        ],
+        "correct": 1,
+        "explain": "The 406 MHz ELT transmits with 5 W."
+       },
+       {
+        "id": "M2.V4.Q13",
+        "question": "What is fitted on the front of the CVR to help find it under water?",
+        "options": [
+         "An underwater locator beacon (ULB)",
+         "An emergency locator transmitter (ELT)",
+         "A flashing strobe light"
+        ],
+        "correct": 0,
+        "explain": "An underwater locator beacon is fitted on the front of the recorder."
+       },
+       {
+        "id": "M2.V4.Q14",
+        "question": "What does the aircraft earth station (AES) consist of?",
+        "options": [
+         "The ACARS management unit and VHF 3",
+         "The satellite and the ground earth station",
+         "The avionics subsystems and the antenna subsystem"
+        ],
+        "correct": 2,
+        "explain": "The AES is the aircraft avionics and the antenna subsystem."
+       },
+       {
+        "id": "M2.V4.Q15",
+        "question": "Where is a fixed ELT installed?",
+        "options": [
+         "In the nose wheel well, behind the radome",
+         "In the upper aft section of the fuselage",
+         "Under the cockpit floor, near the battery"
+        ],
+        "correct": 1,
+        "explain": "The fixed ELT is in the upper aft section of the fuselage."
+       },
+       {
+        "id": "M2.V4.Q16",
+        "question": "When does GEOSAR become most effective?",
+        "options": [
+         "When the 406 MHz signal sends present position data",
+         "When the aircraft is near the poles",
+         "When the ELT transmits on 121.5 MHz"
+        ],
+        "correct": 0,
+        "explain": "GEOSAR works best when the 406 MHz signal carries position data."
+       },
+       {
+        "id": "M2.V4.Q17",
+        "question": "How are the ACARS MU software and database loaded?",
+        "options": [
+         "With the installed airborne data loader",
+         "With a portable data loader on the front of the MU",
+         "Through the ACARS up link from the ground"
+        ],
+        "correct": 1,
+        "explain": "They are loaded with a portable data loader on the MU front, not with the airborne data loader."
+       },
+       {
+        "id": "M2.V4.Q18",
+        "question": "What does SATCOM provide?",
+        "options": [
+         "Reliable transoceanic communication for data and voice",
+         "Short range voice contact with the tower",
+         "Homing signals for search and rescue"
+        ],
+        "correct": 0,
+        "explain": "SATCOM gives reliable transoceanic communication for ACARS, cockpit and passenger voice, telex and fax."
+       },
+       {
+        "id": "M2.V4.Q19",
+        "question": "When can the CVR recording be erased?",
+        "options": [
+         "In flight with both engines running",
+         "On the ground with the parking brake set",
+         "At any time from the control panel"
+        ],
+        "correct": 1,
+        "explain": "Erase works only on the ground with the parking brake set, to protect crew privacy."
+       },
+       {
+        "id": "M2.V4.Q20",
+        "question": "What are the ground earth stations (GES)?",
+        "options": [
+         "Mobile radio stations carried on board the aircraft",
+         "Fixed radio stations linking ground networks and the satellites",
+         "Satellites that relay messages between ground networks"
+        ],
+        "correct": 1,
+        "explain": "The GES are fixed stations that link ground networks with the AES through the satellites."
+       },
+       {
+        "id": "M2.V4.Q21",
+        "question": "Which emergency frequencies does an ELT transmit on?",
+        "options": [
+         "121.5 MHz, 156 MHz and 406 MHz",
+         "121.5 MHz, 330 MHz and 406 MHz",
+         "121.5 MHz, 243 MHz and 406 MHz"
+        ],
+        "correct": 2,
+        "explain": "ELTs transmit on 121.5, 243.0 and 406 MHz."
+       },
+       {
+        "id": "M2.V4.Q22",
+        "question": "How does COSPAS/SARSAT find the position of an ELT?",
+        "options": [
+         "By the time delay from three satellites",
+         "By a GPS position in the ELT signal",
+         "By the Doppler shift as the satellite passes"
+        ],
+        "correct": 2,
+        "explain": "The Doppler shift as the satellite flies over the ELT gives the position."
+       },
+       {
+        "id": "M2.V4.Q23",
+        "question": "How is the SATCOM high gain antenna pointed at the satellite?",
+        "options": [
+         "By the pilot with a control knob",
+         "By data from the beam steering unit",
+         "By a motor that turns it once a flight"
+        ],
+        "correct": 1,
+        "explain": "The HGA gets data from the BSU to steer the beam at the satellite."
+       },
+       {
+        "id": "M2.V4.Q24",
+        "question": "What do automatic ACARS reports usually depend on?",
+        "options": [
+         "The pilot's request",
+         "The weather on the ground",
+         "The flight profile"
+        ],
+        "correct": 2,
+        "explain": "Automatic reports usually depend on the flight profile."
+       },
+       {
+        "id": "M2.V4.Q25",
+        "question": "Where do three of the CVR inputs come from?",
+        "options": [
+         "The ACARS management unit, as data messages",
+         "The audio management unit, as heard in the crew headphones",
+         "The flight data recorder, as clock signals"
+        ],
+        "correct": 1,
+        "explain": "Three inputs come from the AMU and match exactly what the crew hear in their headphones."
+       },
+       {
+        "id": "M2.V4.Q26",
+        "question": "Which crew units is the ACARS MU interfaced with?",
+        "options": [
+         "The multipurpose control and display units (MCDUs)",
+         "The radio management panels (RMPs) only",
+         "The audio control panels (ACPs) at each crew station"
+        ],
+        "correct": 0,
+        "explain": "The ACARS MU is interfaced with the MCDUs."
+       },
+       {
+        "id": "M2.V4.Q27",
+        "question": "What area does SATCOM cover?",
+        "options": [
+         "Only within line of sight of a ground station",
+         "Between 76° north and 76° south",
+         "The whole earth, including the poles"
+        ],
+        "correct": 1,
+        "explain": "Coverage is between 76° N and 76° S."
+       },
+       {
+        "id": "M2.V4.Q28",
+        "question": "What share of 121.5 MHz ELT alarms were found to be false?",
+        "options": [
+         "About 50%",
+         "About 25%",
+         "About 75%"
+        ],
+        "correct": 2,
+        "explain": "NASA studies showed about 75% of 121.5 MHz alarms were false."
+       },
+       {
+        "id": "M2.V4.Q29",
+        "question": "What does the satellite segment do?",
+        "options": [
+         "Relays signals between the aircraft and ground earth stations",
+         "Stores all messages until the aircraft has landed",
+         "Tunes the aircraft radios to the right ground station"
+        ],
+        "correct": 0,
+        "explain": "The satellite segment relays signals between the AES and GES."
+       },
+       {
+        "id": "M2.V4.Q30",
+        "question": "What does the cockpit voice recorder (CVR) record?",
+        "options": [
+         "All messages sent and received by ACARS",
+         "All flight parameters such as speed and altitude",
+         "All cockpit crew communications and sounds in the cockpit"
+        ],
+        "correct": 2,
+        "explain": "The CVR keeps a continuous record of all crew communications and cockpit sounds."
+       },
+       {
+        "id": "M2.V4.Q31",
+        "question": "For how long does an ELT transmit in an upright position?",
+        "options": [
+         "At least 90 days",
+         "At least 48 hours",
+         "At least 30 minutes"
+        ],
+        "correct": 1,
+        "explain": "In an upright position (about 60°) it transmits for at least 48 hours."
+       },
+       {
+        "id": "M2.V4.Q32",
+        "question": "Who can start manual ACARS reports?",
+        "options": [
+         "The pilot, airline ground staff or ATC",
+         "Only the airline maintenance centre",
+         "Only the pilot, from the cockpit"
+        ],
+        "correct": 0,
+        "explain": "Manual reports are started by the pilot, airline ground staff or ATC."
+       },
+       {
+        "id": "M2.V4.Q33",
+        "question": "At what height do the SATCOM satellites orbit?",
+        "options": [
+         "About 36,000 km",
+         "About 20,000 km",
+         "About 800 to 1000 km"
+        ],
+        "correct": 0,
+        "explain": "The geostationary orbit is about 36,000 km high."
+       },
+       {
+        "id": "M2.V4.Q34",
+        "question": "What does the ACARS management unit need to work?",
+        "options": [
+         "A SELCAL code and a tape cartridge",
+         "Operating software and a customer database",
+         "A GPS receiver and a printer"
+        ],
+        "correct": 1,
+        "explain": "The MU needs operating software and a customer database."
+       },
+       {
+        "id": "M2.V4.Q35",
+        "question": "Where does the fourth CVR input come from?",
+        "options": [
+         "The cockpit area microphone",
+         "The passenger address system",
+         "The cabin interphone"
+        ],
+        "correct": 0,
+        "explain": "The 4th input is the general cockpit sound from the area microphone."
+       },
+       {
+        "id": "M2.V4.Q36",
+        "question": "What switches an ELT on automatically?",
+        "options": [
+         "A fire warning in the cockpit",
+         "A loss of aircraft electrical power",
+         "A g-load above 5 g or contact with water"
+        ],
+        "correct": 2,
+        "explain": "The ELT switches on above 5 g or on contact with water, or by hand."
+       },
+       {
+        "id": "M2.V4.Q37",
+        "question": "What does the ACARS OUT report send?",
+        "options": [
+         "The time the first door is opened at the gate",
+         "The time all doors are closed and the aircraft moves",
+         "The time the aircraft lifts off from the runway"
+        ],
+        "correct": 1,
+        "explain": "OUT is sent when all doors are closed and the aircraft starts moving."
+       },
+       {
+        "id": "M2.V4.Q38",
+        "question": "What is a down link?",
+        "options": [
+         "Data sent from the aircraft to the ground",
+         "Data sent from the ground to the aircraft",
+         "Data sent between two aircraft"
+        ],
+        "correct": 0,
+        "explain": "Aircraft to ground is the down link."
+       },
+       {
+        "id": "M2.V4.Q39",
+        "question": "Which systems can ACARS use to send data?",
+        "options": [
+         "VHF 1 or VHF 2, depending on the crew",
+         "The ELT or the transponder, as needed",
+         "VHF 3 or SATCOM, depending on location"
+        ],
+        "correct": 2,
+        "explain": "ACARS uses VHF 3 or SATCOM, depending on where the aircraft is."
+       },
+       {
+        "id": "M2.V4.Q40",
+        "question": "What does the RMP active window show if the ACARS MU fails while active on VHF 3?",
+        "options": [
+         "ACARS",
+         "The last frequency",
+         "Dashes"
+        ],
+        "correct": 2,
+        "explain": "If the MU fails while active on VHF 3, the active window shows dashes."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V4.C001",
+       "front": "What does the CVR record, and for how long?",
+       "back": "All **crew communications** (three AMU inputs, as heard in the headphones) and **cockpit sounds** (area microphone). Tape keeps the **last 30 min**; solid state the **last 120 min**."
+      },
+      {
+       "id": "M2.V4.C002",
+       "front": "How would rescuers find a CVR under water?",
+       "back": "By its **underwater locator beacon (ULB)** on the front of the recorder, active for **90 days**."
+      },
+      {
+       "id": "M2.V4.C003",
+       "front": "When does the CVR start and stop, and when can it be erased?",
+       "back": "It starts when **one engine starts** (at the latest in flight) and stops **5 min after the last engine** is shut down. Erase works only **on the ground with the parking brake set**, for **crew privacy**."
+      },
+      {
+       "id": "M2.V4.C004",
+       "front": "Why must the CVR test button be held for at least 5 seconds?",
+       "back": "The test puts a tone on **each channel in turn**, so it needs time to **check all channels**."
+      },
+      {
+       "id": "M2.V4.C005",
+       "front": "How does a solid-state CVR keep its recording?",
+       "back": "It digitizes the audio and stores it in **flash memory**, which keeps data **after power loss**. Time is stored as an **FSK time code**."
+      },
+      {
+       "id": "M2.V4.C006",
+       "front": "What is ACARS, and which radios carry it?",
+       "back": "A **data link** between aircraft and ground (airline and ATC). It uses **VHF 3** or **SATCOM** depending on location, and **HF** on some aircraft."
+      },
+      {
+       "id": "M2.V4.C007",
+       "front": "What is the difference between an up link and a down link?",
+       "back": "**Down link**: aircraft to ground. **Up link**: ground to aircraft (for example the **load sheet**)."
+      },
+      {
+       "id": "M2.V4.C008",
+       "front": "What do the OOOI reports tell the airline?",
+       "back": "**OUT**: doors closed, aircraft moves. **OFF**: lift-off. **ON**: touchdown. **IN**: first door opened. They are **automatic** and follow the **flight profile**."
+      },
+      {
+       "id": "M2.V4.C009",
+       "front": "How do automatic and manual ACARS reports differ?",
+       "back": "**Automatic** reports follow the **flight profile** (OOOI, ETA, engine reports). **Manual** reports are started by the **pilot, ground staff or ATC**."
+      },
+      {
+       "id": "M2.V4.C010",
+       "front": "Why is VHF 3 special on an ACARS aircraft?",
+       "back": "It is **mainly for ACARS data** but can be a **backup for voice**. It is tuned **automatically by the ACARS MU**, or manually."
+      },
+      {
+       "id": "M2.V4.C011",
+       "front": "How is new software put into the ACARS MU?",
+       "back": "With a **portable data loader** (or notebook) on the **front of the MU**, not the installed airborne data loader. It needs **operating software and a customer database**."
+      },
+      {
+       "id": "M2.V4.C012",
+       "front": "Why does SATCOM not work over the poles?",
+       "back": "It uses **geostationary** INMARSAT satellites at **36,000 km** over the equator, so coverage stops at about **76° N and 76° S**."
+      },
+      {
+       "id": "M2.V4.C013",
+       "front": "What are the three segments of SATCOM, and what does each do?",
+       "back": "**Satellite**: relays signals. **AES**: the system **on the aircraft**. **GES**: **fixed ground stations** linking the satellites to ground networks."
+      },
+      {
+       "id": "M2.V4.C014",
+       "front": "Which frequency bands does SATCOM use?",
+       "back": "Aircraft to satellite: **L-band**. Ground station to satellite: **C-band**. In future: **Ka-band** for more bandwidth."
+      },
+      {
+       "id": "M2.V4.C015",
+       "front": "What is the idea behind SATCOM power management?",
+       "back": "Every part uses the **minimum power needed**, and each channel is **limited to 20 W**."
+      },
+      {
+       "id": "M2.V4.C016",
+       "front": "What are the main SATCOM units on the aircraft?",
+       "back": "The **SDU** is the **central unit**. The **HPA** gives the RF power. The **beam steering unit** points the **high gain antenna** at the satellite."
+      },
+      {
+       "id": "M2.V4.C017",
+       "front": "How does the high gain antenna stay pointed at the satellite?",
+       "back": "It is a **phased array**; the **beam steering unit** steers its beam electronically, using data from the **SDU**."
+      },
+      {
+       "id": "M2.V4.C018",
+       "front": "Why is SATCOM testing treated with care?",
+       "back": "It can be **dangerous** (very high transmit power), so tests need **type training** and must follow the **maintenance manual**."
+      },
+      {
+       "id": "M2.V4.C019",
+       "front": "How does an ELT switch on, and how long does it last?",
+       "back": "**By hand**, **above 5 g**, or on **contact with water**. Upright, it transmits for **at least 48 hours**."
+      },
+      {
+       "id": "M2.V4.C020",
+       "front": "Why was 406 MHz added to the ELT?",
+       "back": "About **75% of 121.5 MHz alarms were false**. 406 MHz has **5 W** power and sends **digital data** (identity, nationality, position)."
+      },
+      {
+       "id": "M2.V4.C021",
+       "front": "What does each ELT frequency do?",
+       "back": "**406 MHz**: goes to satellites to **locate and identify** the aircraft. **121.5 and 243 MHz**: **homing** signals for close-in search."
+      },
+      {
+       "id": "M2.V4.C022",
+       "front": "How do COSPAS/SARSAT and GEOSAR find an ELT?",
+       "back": "**COSPAS/SARSAT**: four **low orbit** satellites use the **Doppler shift**. **GEOSAR**: **geostationary**, always in sight, **no Doppler**, so it needs **position data** in the 406 MHz signal."
+      }
+     ],
+     "batch": 4,
+     "ref": "13.4",
+     "pages": "303–435"
     }
    ],
    "downloads": [
@@ -36874,6 +37998,18 @@
      "title": "Batch 02 · Full Bank · pages 118–200",
      "file": "downloads/M13e-Batch-2-Full-Bank-pages-118-200.pdf",
      "pages": 41
+    },
+    {
+     "id": "M2.V3.DL1",
+     "title": "Batch 03 · Full Bank · pages 201–302",
+     "file": "downloads/M13e-Batch-3-Full-Bank-pages-201-302.pdf",
+     "pages": 41
+    },
+    {
+     "id": "M2.V4.DL1",
+     "title": "Batch 04 · Full Bank · pages 303–435",
+     "file": "downloads/M13e-Batch-4-Full-Bank-pages-303-435.pdf",
+     "pages": 35
     }
    ],
    "batches": 16
