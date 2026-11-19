@@ -37984,6 +37984,2716 @@
      "batch": 4,
      "ref": "13.4",
      "pages": "303–435"
+    },
+    {
+     "id": "M2.V5",
+     "name": "Navigation",
+     "cardsName": "Batch 05 · Study Cards · pages 438–537",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V5.QZ",
+      "name": "Batch 05 · Mock Exam · pages 438–537",
+      "questions": [
+       {
+        "id": "M2.V5.Q1",
+        "question": "When does the VOR deviation bar show full deflection?",
+        "options": [
+         "When 10° or more off the selected course",
+         "When 2° or more off the selected course",
+         "When 30° or more off the selected course"
+        ],
+        "correct": 0,
+        "explain": "Full deflection is at 10° difference or more."
+       },
+       {
+        "id": "M2.V5.Q2",
+        "question": "What is VOR mainly used for?",
+        "options": [
+         "Collision avoidance",
+         "Area navigation",
+         "Landing guidance"
+        ],
+        "correct": 1,
+        "explain": "Mainly the VOR is used for area navigation."
+       },
+       {
+        "id": "M2.V5.Q3",
+        "question": "In which frequency band does the ADF receive?",
+        "options": [
+         "962 MHz to 1213 MHz",
+         "108 MHz to 118 MHz",
+         "190 kHz to 1750 kHz"
+        ],
+        "correct": 2,
+        "explain": "The ADF receives signals from 190 to 1750 kHz."
+       },
+       {
+        "id": "M2.V5.Q4",
+        "question": "Which is the oldest enroute radio navigation system?",
+        "options": [
+         "ILS",
+         "ADF",
+         "VOR"
+        ],
+        "correct": 1,
+        "explain": "The ADF system is the oldest system."
+       },
+       {
+        "id": "M2.V5.Q5",
+        "question": "Where is the VOR antenna located?",
+        "options": [
+         "On the bottom of the fuselage",
+         "In the nose radome",
+         "On the vertical stabilizer"
+        ],
+        "correct": 2,
+        "explain": "The VOR antenna is on the vertical stabilizer."
+       },
+       {
+        "id": "M2.V5.Q6",
+        "question": "What is Rho navigation?",
+        "options": [
+         "Finding position from distances to stations",
+         "Finding position from the aircraft's speed",
+         "Finding position from angles to stations"
+        ],
+        "correct": 0,
+        "explain": "Rho navigation determines distances to stations (DME)."
+       },
+       {
+        "id": "M2.V5.Q7",
+        "question": "Why does a loop antenna alone not give the direction to a station?",
+        "options": [
+         "The station could be in two opposite directions",
+         "The loop cannot receive LF signals",
+         "The signal is too weak to measure"
+        ],
+        "correct": 0,
+        "explain": "With two minimums, the station could be in two directions: an ambiguity."
+       },
+       {
+        "id": "M2.V5.Q8",
+        "question": "Which antenna is active in ANT mode?",
+        "options": [
+         "Both antennas",
+         "Only the loop antenna",
+         "Only the sense antenna"
+        ],
+        "correct": 2,
+        "explain": "In ANT mode only the sense antenna is active."
+       },
+       {
+        "id": "M2.V5.Q9",
+        "question": "When is the ADF ANT mode used?",
+        "options": [
+         "When the BFO has failed",
+         "When the bearing is unreliable",
+         "When the station ident is weak"
+        ],
+        "correct": 2,
+        "explain": "ANT mode is used when the identifier reception is weak."
+       },
+       {
+        "id": "M2.V5.Q10",
+        "question": "What does the ADF receiver use to calculate the relative bearing?",
+        "options": [
+         "Both the loop and sense signals",
+         "Only the sense signal",
+         "Only the loop signal"
+        ],
+        "correct": 0,
+        "explain": "The receiver uses both signals to calculate the relative bearing."
+       },
+       {
+        "id": "M2.V5.Q11",
+        "question": "Which flight rules is the ICAO chart used for?",
+        "options": [
+         "Both visual and instrument flight rules",
+         "Only instrument flight rules, in bad weather",
+         "Only visual flight rules, in good weather"
+        ],
+        "correct": 0,
+        "explain": "The ICAO chart is used for both VFR and IFR."
+       },
+       {
+        "id": "M2.V5.Q12",
+        "question": "How is the DVOR reference phase sent?",
+        "options": [
+         "FM on the subcarrier from the ring antennas",
+         "AM on the carrier from the centre antenna",
+         "AM on the subcarrier from the ring antennas"
+        ],
+        "correct": 1,
+        "explain": "The DVOR 30 Hz reference is AM on the carrier, sent from the centre antenna."
+       },
+       {
+        "id": "M2.V5.Q13",
+        "question": "What is variation?",
+        "options": [
+         "The difference between true and magnetic north",
+         "The difference between heading and bearing",
+         "The difference between two VOR radials"
+        ],
+        "correct": 0,
+        "explain": "The difference between true and magnetic north is called variation."
+       },
+       {
+        "id": "M2.V5.Q14",
+        "question": "Why does the VOR receiver have an audio output?",
+        "options": [
+         "To record on the cockpit voice recorder",
+         "To give voice warnings to the crew",
+         "To identify the station by its Morse code"
+        ],
+        "correct": 2,
+        "explain": "The audio output lets the crew identify the station by Morse code."
+       },
+       {
+        "id": "M2.V5.Q15",
+        "question": "What is VOR deviation?",
+        "options": [
+         "The difference between the radial and the aircraft heading",
+         "The difference between the actual and a preselected radial",
+         "The difference between the VOR and the DME readings"
+        ],
+        "correct": 1,
+        "explain": "VOR deviation is the difference between the actual radial and a preselected radial."
+       },
+       {
+        "id": "M2.V5.Q16",
+        "question": "Where are ADF antennas located?",
+        "options": [
+         "On the top or bottom of the fuselage",
+         "In the leading edge of the wing",
+         "On the tip of the vertical stabilizer"
+        ],
+        "correct": 0,
+        "explain": "ADF antennas are on the top of the fuselage, or at the bottom."
+       },
+       {
+        "id": "M2.V5.Q17",
+        "question": "What do VOR stations at large airports also transmit?",
+        "options": [
+         "The distance to the runway threshold",
+         "Spoken traffic information and weather reports",
+         "Glide slope signals for the approach"
+        ],
+        "correct": 1,
+        "explain": "They transmit spoken traffic and weather information: ATIS."
+       },
+       {
+        "id": "M2.V5.Q18",
+        "question": "What do radio navigation systems use to help the pilot navigate?",
+        "options": [
+         "Radio signals from ground stations",
+         "Signals from the aircraft's own radar",
+         "Signals from the air data computers"
+        ],
+        "correct": 0,
+        "explain": "Radio navigation systems use radio signals from ground stations."
+       },
+       {
+        "id": "M2.V5.Q19",
+        "question": "What is a terminal VOR (TVOR)?",
+        "options": [
+         "A high-power VOR used for enroute navigation",
+         "A VOR near an airport used for holdings and approaches",
+         "A VOR combined with a DME to measure distance"
+        ],
+        "correct": 1,
+        "explain": "VORs near airports used for holdings or VOR/DME approaches are terminal VORs."
+       },
+       {
+        "id": "M2.V5.Q20",
+        "question": "How wide is the sector where the TO/FROM indication is not definite?",
+        "options": [
+         "Less than ±5°",
+         "Less than ±30°",
+         "Less than ±90°"
+        ],
+        "correct": 1,
+        "explain": "There is an allowed sector of less than ±30° where TO/FROM is indefinite."
+       },
+       {
+        "id": "M2.V5.Q21",
+        "question": "Which ADF pointer has a single line on the navigation display?",
+        "options": [
+         "ADF 2",
+         "Both ADFs",
+         "ADF 1"
+        ],
+        "correct": 2,
+        "explain": "ADF 1 has a single line pointer; ADF 2 a double line."
+       },
+       {
+        "id": "M2.V5.Q22",
+        "question": "What does a wind direction always tell you?",
+        "options": [
+         "Where the wind blows to",
+         "Where the runway points",
+         "Where the wind comes from"
+        ],
+        "correct": 2,
+        "explain": "Wind direction always refers to the direction the wind comes from."
+       },
+       {
+        "id": "M2.V5.Q23",
+        "question": "Which part of the loop signal does the ADF use for direction?",
+        "options": [
+         "The maximums",
+         "The minimums",
+         "The average"
+        ],
+        "correct": 1,
+        "explain": "Minimums are sharper than maximums, so the ADF uses the minimums."
+       },
+       {
+        "id": "M2.V5.Q24",
+        "question": "Which part of the radio wave does the ADF loop antenna receive?",
+        "options": [
+         "The electric part",
+         "Both parts equally",
+         "The magnetic part"
+        ],
+        "correct": 2,
+        "explain": "The loop antenna receives the magnetic part of the wave."
+       },
+       {
+        "id": "M2.V5.Q25",
+        "question": "Which systems receive VOR outputs besides the displays?",
+        "options": [
+         "The ELT, the CVR and the ACARS",
+         "The autopilot, flight director and FMS",
+         "The TCAS, the weather radar and the GPWS"
+        ],
+        "correct": 1,
+        "explain": "Outputs go to the autopilot, flight director and FMS."
+       },
+       {
+        "id": "M2.V5.Q26",
+        "question": "What lets an aircraft fly non-radial courses with VOR?",
+        "options": [
+         "DME and a navigation computer on board",
+         "A higher-power VOR ground station",
+         "A second VOR receiver and antenna"
+        ],
+        "correct": 0,
+        "explain": "With DME and an onboard navigation computer, non-radial courses can be flown."
+       },
+       {
+        "id": "M2.V5.Q27",
+        "question": "What is QDR?",
+        "options": [
+         "The true bearing to a ground station",
+         "The magnetic bearing from a ground station",
+         "The magnetic bearing to a ground station"
+        ],
+        "correct": 1,
+        "explain": "QDR is the magnetic bearing from a ground station."
+       },
+       {
+        "id": "M2.V5.Q28",
+        "question": "Why is the second VOR display mode called manual VOR?",
+        "options": [
+         "It works without power",
+         "It needs manual tuning",
+         "It needs a pilot action"
+        ],
+        "correct": 2,
+        "explain": "It requires a pilot action, so it is called manual VOR mode."
+       },
+       {
+        "id": "M2.V5.Q29",
+        "question": "How many axes does an aircraft have?",
+        "options": [
+         "Three",
+         "Two",
+         "Four"
+        ],
+        "correct": 0,
+        "explain": "The aircraft has 3 axes."
+       },
+       {
+        "id": "M2.V5.Q30",
+        "question": "What are VOR radials referenced to?",
+        "options": [
+         "The runway heading",
+         "True north",
+         "Magnetic north"
+        ],
+        "correct": 2,
+        "explain": "VOR radials are referenced to magnetic north."
+       },
+       {
+        "id": "M2.V5.Q31",
+        "question": "How does the VOR receiver find the aircraft's position relative to the station?",
+        "options": [
+         "By measuring the strength of the received signal",
+         "By comparing the reference and variable signals",
+         "By timing how long the Morse ident takes to arrive"
+        ],
+        "correct": 1,
+        "explain": "The receiver compares the two signals and calculates the radial."
+       },
+       {
+        "id": "M2.V5.Q32",
+        "question": "What is the reference for a relative bearing?",
+        "options": [
+         "The aircraft's longitudinal axis",
+         "The magnetic north pole",
+         "The geographical north pole"
+        ],
+        "correct": 0,
+        "explain": "A relative bearing is referenced to the longitudinal axis."
+       },
+       {
+        "id": "M2.V5.Q33",
+        "question": "What does a \"D\" in front of a VOR frequency on a chart mean?",
+        "options": [
+         "A DME is collocated with the VOR",
+         "The VOR is out of service",
+         "The VOR is a Doppler VOR"
+        ],
+        "correct": 0,
+        "explain": "The D shows a collocated DME station."
+       },
+       {
+        "id": "M2.V5.Q34",
+        "question": "What is the power and range of an enroute VOR?",
+        "options": [
+         "About 25 W, 25 to 50 NM",
+         "About 200 W, more than 100 NM",
+         "About 2 kW, more than 500 NM"
+        ],
+        "correct": 1,
+        "explain": "Enroute VORs transmit about 200 W with range over 100 NM."
+       },
+       {
+        "id": "M2.V5.Q35",
+        "question": "How do you find the magnetic bearing to a station?",
+        "options": [
+         "Add the relative bearing to the magnetic heading",
+         "Add the variation to the relative bearing",
+         "Subtract the relative bearing from true north"
+        ],
+        "correct": 0,
+        "explain": "Magnetic bearing = magnetic heading + relative bearing."
+       },
+       {
+        "id": "M2.V5.Q36",
+        "question": "What is the difference between QDM and QDR?",
+        "options": [
+         "Always the variation",
+         "Always 90°",
+         "Always 180°"
+        ],
+        "correct": 2,
+        "explain": "The relation between QDM and QDR is always 180°."
+       },
+       {
+        "id": "M2.V5.Q37",
+        "question": "What is the function of the VOR system?",
+        "options": [
+         "To give the descent path to the runway",
+         "To receive and process bearing information from VOR stations",
+         "To measure the distance to a ground station"
+        ],
+        "correct": 1,
+        "explain": "The VOR receives, decodes and processes bearing information from the ground station."
+       },
+       {
+        "id": "M2.V5.Q38",
+        "question": "What is the difference between track and heading called?",
+        "options": [
+         "Drift",
+         "Variation",
+         "Deviation"
+        ],
+        "correct": 0,
+        "explain": "The difference between track and heading is called drift."
+       },
+       {
+        "id": "M2.V5.Q39",
+        "question": "How many VOR stations are needed to fix the aircraft position?",
+        "options": [
+         "One",
+         "Three",
+         "Two"
+        ],
+        "correct": 2,
+        "explain": "Two VOR stations are needed; the position is where the two radials cross."
+       },
+       {
+        "id": "M2.V5.Q40",
+        "question": "What can the VOR principle be compared with?",
+        "options": [
+         "A radar with a rotating antenna and a screen",
+         "A clock with an hour hand and a minute hand",
+         "A lighthouse with a rotating beam and a flashlight"
+        ],
+        "correct": 2,
+        "explain": "The VOR is like a lighthouse with a rotating beam and a flashlight."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V5.C001",
+       "front": "Which radio navigation systems are used for enroute flying and which for landing?",
+       "back": "Enroute: **ADF** (the oldest) and **VOR** (the most common). Landing: the **ILS**, for poor weather."
+      },
+      {
+       "id": "M2.V5.C002",
+       "front": "Why do IFR flights depend on radio navigation?",
+       "back": "IFR means flying **without visual ground references**, so a safe and economic flight needs **radio navigation systems and their ground stations**."
+      },
+      {
+       "id": "M2.V5.C003",
+       "front": "What is the difference between true north, magnetic north and variation?",
+       "back": "**True north** points to the geographical pole, **magnetic north** to where the field lines gather. The angle between them is **variation** (east or west)."
+      },
+      {
+       "id": "M2.V5.C004",
+       "front": "How do heading, track and drift relate?",
+       "back": "**Heading** is where the **nose points**. **Track** is where the aircraft **moves over the earth**. The difference, caused by **wind**, is **drift**."
+      },
+      {
+       "id": "M2.V5.C005",
+       "front": "What are the three kinds of bearing?",
+       "back": "**Relative bearing** from the **longitudinal axis**, **magnetic bearing** from **magnetic north**, **true bearing** from **true north**. Magnetic bearing = **magnetic heading + relative bearing**."
+      },
+      {
+       "id": "M2.V5.C006",
+       "front": "What do QDM and QDR mean?",
+       "back": "**QDM**: magnetic bearing **to** the station. **QDR**: magnetic bearing **from** the station (a VOR **radial**). They are always **180°** apart."
+      },
+      {
+       "id": "M2.V5.C007",
+       "front": "How do Rho and Theta navigation differ?",
+       "back": "**Rho** uses **distances** to stations (DME). **Theta** uses **angles** to stations (ADF, VOR)."
+      },
+      {
+       "id": "M2.V5.C008",
+       "front": "What does the ADF do?",
+       "back": "It receives **190–1750 kHz** from **NDBs and locators** and shows the **relative bearing** to the station, with a Morse ident."
+      },
+      {
+       "id": "M2.V5.C009",
+       "front": "Why does the ADF need both a loop and a sense antenna?",
+       "back": "The **loop** (magnetic part) has **two nulls**, so the station could be in two directions. The **sense** antenna (electric part) gives a **reference** that removes the ambiguity."
+      },
+      {
+       "id": "M2.V5.C010",
+       "front": "How has the ADF loop antenna developed?",
+       "back": "First a **rotating loop**; then **fixed sine and cosine coils** with a goniometer; now **microprocessors** with no moving parts."
+      },
+      {
+       "id": "M2.V5.C011",
+       "front": "What is quadrantal error?",
+       "back": "The fuselage acts as an antenna and **bends bearings near 45°** to the fuselage. A **QEC** corrects it."
+      },
+      {
+       "id": "M2.V5.C012",
+       "front": "What are the ADF modes?",
+       "back": "**ADF**: fully working, bearing and ident. **ANT**: **sense antenna only**, ident but no bearing, used when the ident is **weak**."
+      },
+      {
+       "id": "M2.V5.C013",
+       "front": "What does the VOR system give the pilot?",
+       "back": "The **radial** (magnetic bearing from the station), referenced to **magnetic north**. Two radials give a **fix**; with **DME** and a computer, non-radial courses can be flown."
+      },
+      {
+       "id": "M2.V5.C014",
+       "front": "How do enroute and terminal VORs differ?",
+       "back": "**Enroute**: about **200 W**, more than **100 NM**. **Terminal**: about **25 W**, **25–50 NM**, near airports for holdings and approaches."
+      },
+      {
+       "id": "M2.V5.C015",
+       "front": "How does a VOR work, using the lighthouse idea?",
+       "back": "The **reference** signal is the **flash** sent in all directions; the **variable** signal is the **rotating beam**. The **phase difference** gives the radial."
+      },
+      {
+       "id": "M2.V5.C016",
+       "front": "Why use a Doppler VOR?",
+       "back": "A conventional VOR can **misnavigate from reflections** in mountainous areas. The DVOR uses the **Doppler effect** and FM variable phase, so it is **more accurate**."
+      },
+      {
+       "id": "M2.V5.C017",
+       "front": "How do the automatic and manual VOR modes differ?",
+       "back": "**Automatic** (RMI): shows the **bearing** to the station. **Manual**: shows the **deviation** from a **preselected course**; full deflection at **10°**."
+      },
+      {
+       "id": "M2.V5.C018",
+       "front": "Does the heading affect which radial the aircraft is on?",
+       "back": "**No.** The radial depends only on **position**. TO/FROM also ignores heading."
+      },
+      {
+       "id": "M2.V5.C019",
+       "front": "What makes up the VOR system on the aircraft?",
+       "back": "**Two receivers**, an antenna on the **vertical stabilizer** (horizontally polarized), and outputs to the **displays, autopilot, flight director, FMS** and **audio** for the ident."
+      }
+     ],
+     "batch": 5,
+     "ref": "13.4",
+     "pages": "438–537"
+    },
+    {
+     "id": "M2.V6",
+     "name": "Navigation",
+     "cardsName": "Batch 06 · Study Cards · pages 538–648",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V6.QZ",
+      "name": "Batch 06 · Mock Exam · pages 538–648",
+      "questions": [
+       {
+        "id": "M2.V6.Q1",
+        "question": "Which MLS benefit is furthest from being used?",
+        "options": [
+         "The curved approach",
+         "The wider coverage",
+         "The back azimuth guidance"
+        ],
+        "correct": 0,
+        "explain": "The curved approach, the most advertised benefit, is the furthest from implementation."
+       },
+       {
+        "id": "M2.V6.Q2",
+        "question": "What made semiconductors possible for radar?",
+        "options": [
+         "Higher supply voltages",
+         "More sensitive receivers",
+         "Larger antennas"
+        ],
+        "correct": 1,
+        "explain": "More sensitive receivers can evaluate low reflected power."
+       },
+       {
+        "id": "M2.V6.Q3",
+        "question": "How far from the runway is the outer marker?",
+        "options": [
+         "About 300 m",
+         "About 1000 m",
+         "About 7 km"
+        ],
+        "correct": 2,
+        "explain": "The outer marker is about 7 km from the runway."
+       },
+       {
+        "id": "M2.V6.Q4",
+        "question": "Which signals does the localizer transmit for lateral guidance?",
+        "options": [
+         "400 Hz and 1300 Hz",
+         "90 Hz and 150 Hz",
+         "30 Hz and 9960 Hz"
+        ],
+        "correct": 1,
+        "explain": "The localizer transmits 90 Hz and 150 Hz signals for lateral guidance."
+       },
+       {
+        "id": "M2.V6.Q5",
+        "question": "Why are high radar frequencies not suitable for long range?",
+        "options": [
+         "They need larger antennas",
+         "They cannot be reflected",
+         "The atmosphere absorbs them more"
+        ],
+        "correct": 2,
+        "explain": "High frequencies are absorbed more and hardly penetrate clouds."
+       },
+       {
+        "id": "M2.V6.Q6",
+        "question": "Which way does the localizer bar move in the 150 Hz beam?",
+        "options": [
+         "To the left",
+         "Up",
+         "To the right"
+        ],
+        "correct": 0,
+        "explain": "The bar moves left in the 150 Hz (blue) beam and right in the 90 Hz (yellow) beam."
+       },
+       {
+        "id": "M2.V6.Q7",
+        "question": "How is the glide slope receiver tuned?",
+        "options": [
+         "Automatically to the channel paired with the localizer",
+         "Automatically by the marker beacon receiver",
+         "Manually by the pilot from the approach chart"
+        ],
+        "correct": 0,
+        "explain": "Each localizer channel has a paired glide slope channel, tuned automatically."
+       },
+       {
+        "id": "M2.V6.Q8",
+        "question": "What gives the distance to the runway on an ILS approach?",
+        "options": [
+         "The VOR and the ADF",
+         "The localizer and the glide slope",
+         "The marker beacons and the DME"
+        ],
+        "correct": 2,
+        "explain": "Distance to touchdown is given by the outer and middle markers and the DME."
+       },
+       {
+        "id": "M2.V6.Q9",
+        "question": "What polarization and frequency do marker beacons use?",
+        "options": [
+         "Horizontal, 108 MHz",
+         "Vertical, 75 MHz",
+         "Horizontal, 75 MHz"
+        ],
+        "correct": 2,
+        "explain": "Markers transmit horizontally polarized signals on 75 MHz."
+       },
+       {
+        "id": "M2.V6.Q10",
+        "question": "What accuracy can MLS achieve?",
+        "options": [
+         "A few tenths of a degree",
+         "About 1 degree",
+         "About 5 degrees"
+        ],
+        "correct": 0,
+        "explain": "MLS accuracy can be a few tenths of a degree."
+       },
+       {
+        "id": "M2.V6.Q11",
+        "question": "What is the simplest rotary waveguide joint?",
+        "options": [
+         "A round waveguide",
+         "A flexible coax cable",
+         "A rectangular waveguide"
+        ],
+        "correct": 0,
+        "explain": "The simplest way is a round waveguide."
+       },
+       {
+        "id": "M2.V6.Q12",
+        "question": "What is secondary radar used for?",
+        "options": [
+         "Detecting rain",
+         "Identifying aircraft",
+         "Measuring height above ground"
+        ],
+        "correct": 1,
+        "explain": "Secondary radar is used for aircraft identification."
+       },
+       {
+        "id": "M2.V6.Q13",
+        "question": "How many channels does the localizer use?",
+        "options": [
+         "40",
+         "200",
+         "160"
+        ],
+        "correct": 0,
+        "explain": "The localizer uses one of 40 channels."
+       },
+       {
+        "id": "M2.V6.Q14",
+        "question": "Which problems limit the ILS in the long term?",
+        "options": [
+         "Its use of microwave frequencies and small antennas",
+         "Its short range and the high cost of its stations",
+         "Interference, weather, taxiing aircraft and terrain"
+        ],
+        "correct": 2,
+        "explain": "Interference, weather, taxiing aircraft and the need for flat terrain limit ILS."
+       },
+       {
+        "id": "M2.V6.Q15",
+        "question": "What is the advantage of a high radar frequency?",
+        "options": [
+         "Better penetration of clouds and heavy rain",
+         "Stronger reflections, so small objects are found",
+         "Longer range in all weather conditions"
+        ],
+        "correct": 1,
+        "explain": "Higher frequencies give stronger reflections, good for small objects."
+       },
+       {
+        "id": "M2.V6.Q16",
+        "question": "What does a λ/4 transformer in a waveguide joint do?",
+        "options": [
+         "Converts an open into a short and a short into an open",
+         "Steps up the voltage across the joint for the seal",
+         "Converts the alternating current into direct current"
+        ],
+        "correct": 0,
+        "explain": "A λ/4 transformer turns an interruption into a short and vice versa."
+       },
+       {
+        "id": "M2.V6.Q17",
+        "question": "Where are ILS indications shown on modern aircraft?",
+        "options": [
+         "On the radio magnetic indicator and the audio panel",
+         "On the primary flight display and the navigation display",
+         "On the MCDU and the radio management panel"
+        ],
+        "correct": 1,
+        "explain": "ILS indications are on the PFD and the ND."
+       },
+       {
+        "id": "M2.V6.Q18",
+        "question": "What does the marker beacon system supply?",
+        "options": [
+         "Visual and aural signals when passing over beacons",
+         "Lateral guidance along the runway centreline",
+         "A continuous distance readout to the runway"
+        ],
+        "correct": 0,
+        "explain": "It supplies visual and aural indications when flying over the beacons."
+       },
+       {
+        "id": "M2.V6.Q19",
+        "question": "What does the ILS provide?",
+        "options": [
+         "Distance and bearing data to a ground station",
+         "Lateral and vertical position data to land the aircraft",
+         "Height above the ground during cruise"
+        ],
+        "correct": 1,
+        "explain": "The ILS gives the lateral and vertical position data needed to put the aircraft on the runway."
+       },
+       {
+        "id": "M2.V6.Q20",
+        "question": "What does the middle marker show?",
+        "options": [
+         "Where the aircraft should intercept the glide slope",
+         "About where the glide slope meets decision height",
+         "Where the runway threshold and touchdown zone are"
+        ],
+        "correct": 1,
+        "explain": "The MM shows about where the GS meets the decision height, usually 200 ft."
+       },
+       {
+        "id": "M2.V6.Q21",
+        "question": "What does radar use to find objects?",
+        "options": [
+         "The heat given off by the object",
+         "The sound made by the object",
+         "The reflection of an electromagnetic wave"
+        ],
+        "correct": 2,
+        "explain": "Radar uses the reflection of an electromagnetic wave."
+       },
+       {
+        "id": "M2.V6.Q22",
+        "question": "How does a magnetron create oscillation?",
+        "options": [
+         "With a crystal and an amplifier",
+         "With a rotating coil in a magnet",
+         "With electric and magnetic fields in a cavity"
+        ],
+        "correct": 2,
+        "explain": "A magnetron uses electric and magnetic fields to create oscillation in a cavity."
+       },
+       {
+        "id": "M2.V6.Q23",
+        "question": "How does MLS differ from ILS in its beams?",
+        "options": [
+         "MLS has one fixed pencil beam along the runway",
+         "MLS has scanning beams in azimuth and elevation",
+         "MLS has no beams, only pulses from the DME"
+        ],
+        "correct": 1,
+        "explain": "ILS is a fixed pencil beam; MLS has two scanning beams."
+       },
+       {
+        "id": "M2.V6.Q24",
+        "question": "Where are the localizer and glide slope antennas usually located?",
+        "options": [
+         "On the vertical stabilizer",
+         "On the bottom of the fuselage",
+         "Under the nose radome"
+        ],
+        "correct": 2,
+        "explain": "They are usually under the nose radome."
+       },
+       {
+        "id": "M2.V6.Q25",
+        "question": "What frequency range does the ILS localizer use?",
+        "options": [
+         "329.15 to 335.0 MHz",
+         "108.10 to 111.95 MHz",
+         "190 to 1750 kHz"
+        ],
+        "correct": 1,
+        "explain": "The localizer uses 108.10–111.95 MHz."
+       },
+       {
+        "id": "M2.V6.Q26",
+        "question": "Which tone and light belong to the outer marker?",
+        "options": [
+         "400 Hz and a blue light",
+         "3000 Hz and a white light",
+         "1300 Hz and an amber light"
+        ],
+        "correct": 0,
+        "explain": "The OM uses 400 Hz and turns on the blue lamp."
+       },
+       {
+        "id": "M2.V6.Q27",
+        "question": "What band does MLS operate in?",
+        "options": [
+         "VHF band, about 110 MHz",
+         "C-band, about 5 GHz",
+         "L-band, about 1 GHz"
+        ],
+        "correct": 1,
+        "explain": "MLS operates in the microwave C-band (5 GHz)."
+       },
+       {
+        "id": "M2.V6.Q28",
+        "question": "What does a flat plate antenna consist of?",
+        "options": [
+         "A feedhorn and reflector",
+         "A single parabolic dish",
+         "An array of slot antennas"
+        ],
+        "correct": 2,
+        "explain": "A flat plate antenna is an array of slot antennas."
+       },
+       {
+        "id": "M2.V6.Q29",
+        "question": "What does the radio altimeter measure?",
+        "options": [
+         "Height above the ground",
+         "Height above sea level",
+         "Distance to a station"
+        ],
+        "correct": 0,
+        "explain": "The radio altimeter measures altitude over ground."
+       },
+       {
+        "id": "M2.V6.Q30",
+        "question": "Which marker beacon is no longer in use?",
+        "options": [
+         "The outer marker",
+         "The middle marker",
+         "The inner marker"
+        ],
+        "correct": 2,
+        "explain": "The inner marker is no longer in use."
+       },
+       {
+        "id": "M2.V6.Q31",
+        "question": "Which localizer frequencies are used?",
+        "options": [
+         "Only those with even tenths of a MHz",
+         "Only those with odd tenths of a MHz",
+         "Any tenth of a MHz"
+        ],
+        "correct": 1,
+        "explain": "The localizer uses only frequencies with odd tenths of a MHz."
+       },
+       {
+        "id": "M2.V6.Q32",
+        "question": "What does IMPATT stand for?",
+        "options": [
+         "Impact Ionization Avalanche Transit Time",
+         "Integrated Microwave Power Amplifier",
+         "Impulse Amplified Transmitter Tube"
+        ],
+        "correct": 0,
+        "explain": "IMPATT stands for Impact Ionization Avalanche Transit Time."
+       },
+       {
+        "id": "M2.V6.Q33",
+        "question": "What is the advantage of a coax cable?",
+        "options": [
+         "Lower attenuation",
+         "Lower cost",
+         "Lower weight"
+        ],
+        "correct": 0,
+        "explain": "Coax has lower attenuation."
+       },
+       {
+        "id": "M2.V6.Q34",
+        "question": "What can a poor waveguide joint cause?",
+        "options": [
+         "Ice on the antenna",
+         "Arcing and sparking",
+         "A lower radar frequency"
+        ],
+        "correct": 1,
+        "explain": "Incorrect joints can cause massive arcing and sparking."
+       },
+       {
+        "id": "M2.V6.Q35",
+        "question": "Which antennas are common in the microwave range?",
+        "options": [
+         "Parabolic and slot antennas",
+         "Loop and sense antennas",
+         "Dipole and Yagi antennas"
+        ],
+        "correct": 0,
+        "explain": "In the microwave range, parabolic or slot antennas are common."
+       },
+       {
+        "id": "M2.V6.Q36",
+        "question": "What can a waveguide be compared to?",
+        "options": [
+         "A pair of twisted wires",
+         "A coax cable with a thick core",
+         "A water hose with nothing inside"
+        ],
+        "correct": 2,
+        "explain": "A waveguide is like a hose: an outer wall with nothing inside."
+       },
+       {
+        "id": "M2.V6.Q37",
+        "question": "What are simple two-wire cables suitable for?",
+        "options": [
+         "VHF frequencies such as antenna feeds",
+         "Low frequencies such as telephone or mains",
+         "Microwave frequencies such as radar"
+        ],
+        "correct": 1,
+        "explain": "A simple cable is only suitable for low frequencies."
+       },
+       {
+        "id": "M2.V6.Q38",
+        "question": "What is a waveguide feed probe?",
+        "options": [
+         "A coax conductor with the shield removed",
+         "A slot cut in the waveguide wall",
+         "A loop of wire on the waveguide"
+        ],
+        "correct": 0,
+        "explain": "The probe is the coax conductor with the shielding removed."
+       },
+       {
+        "id": "M2.V6.Q39",
+        "question": "How is the beam changed for map mode?",
+        "options": [
+         "By changing the frequency from high to low",
+         "By switching off half of the antenna",
+         "By changing the polarization from vertical to horizontal"
+        ],
+        "correct": 2,
+        "explain": "Polarization changes from vertical (pencil) to horizontal (map)."
+       },
+       {
+        "id": "M2.V6.Q40",
+        "question": "What frequencies are IMPATT diodes suitable for?",
+        "options": [
+         "Up to 3 GHz",
+         "Up to 30 MHz",
+         "Up to 300 GHz"
+        ],
+        "correct": 2,
+        "explain": "IMPATT diodes work up to 300 GHz with up to 20% efficiency."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V6.C001",
+       "front": "What does the ILS give the pilot, and why is it needed?",
+       "back": "**Lateral** guidance (localizer) and **vertical** guidance (glide slope) to the runway, **even in bad weather**. Distance comes from the **markers and DME**."
+      },
+      {
+       "id": "M2.V6.C002",
+       "front": "How does the localizer show the aircraft where the centreline is?",
+       "back": "It sends two lobes: **90 Hz on the left**, **150 Hz on the right**. On the centreline both are **equal**; off it, one **predominates** and the pointer moves."
+      },
+      {
+       "id": "M2.V6.C003",
+       "front": "How are localizer and glide slope frequencies chosen?",
+       "back": "The localizer uses **40 channels** in **108.10–111.95 MHz**, **odd tenths only**. Each has a **paired glide slope** channel (**329.15–335.0 MHz**), tuned **automatically**."
+      },
+      {
+       "id": "M2.V6.C004",
+       "front": "How does the glide slope give the descent path?",
+       "back": "Two lobes: **90 Hz above**, **150 Hz below**. Where they are **equal** is the glide path to the **touchdown point**."
+      },
+      {
+       "id": "M2.V6.C005",
+       "front": "Where are the aircraft ILS antennas and displays?",
+       "back": "Antennas are **under the nose radome**; indications are on the **PFD and ND**, and signals go to the **autopilot**."
+      },
+      {
+       "id": "M2.V6.C006",
+       "front": "Why does the pilot still need visibility in an automatic landing?",
+       "back": "The autopilot needs **no visibility**, but the pilot must **monitor** the landing. Without the runway in sight at **decision height** (the **minimum**), he must **go around**."
+      },
+      {
+       "id": "M2.V6.C007",
+       "front": "How can you tell the marker beacons apart?",
+       "back": "**Outer**: ~7 km, **400 Hz**, **blue**, dashes. **Middle**: ~1000 m, **1300 Hz**, **amber**, dots and dashes. **Inner**: ~300 m, **3000 Hz**, **white**, dots (no longer used)."
+      },
+      {
+       "id": "M2.V6.C008",
+       "front": "Why will the ILS not meet aviation's needs forever?",
+       "back": "**Interference** (FM and TV), **weather**, **taxiing aircraft** and the need for **flat terrain** all limit it."
+      },
+      {
+       "id": "M2.V6.C009",
+       "front": "How does MLS differ from ILS?",
+       "back": "ILS is a **fixed pencil beam**; MLS has **scanning beams** in **azimuth and elevation**, works in the **C-band (5 GHz)** and is accurate to **a few tenths of a degree**."
+      },
+      {
+       "id": "M2.V6.C010",
+       "front": "How are radar systems used in aviation?",
+       "back": "**Surveillance** radar (airspace), **weather** radar (rain), **radio altimeter** (height over ground), **secondary** radar (identification, the target **replies**)."
+      },
+      {
+       "id": "M2.V6.C011",
+       "front": "What does the radar frequency choice trade off?",
+       "back": "**High** frequency: **strong reflections** and a **small beam**, but **absorbed** by the atmosphere, so **short range**. It is a compromise of **resolution and range**."
+      },
+      {
+       "id": "M2.V6.C012",
+       "front": "What decides how accurately radar places an object?",
+       "back": "Mainly the **beam width**: a narrower beam is more accurate. Accuracy also **falls with distance**."
+      },
+      {
+       "id": "M2.V6.C013",
+       "front": "How do magnetrons and IMPATT diodes make microwaves?",
+       "back": "A **magnetron** uses **electric and magnetic fields** around a **cathode and ring anode** to make a **self-sustaining oscillation**. An **IMPATT** diode is a **semiconductor**, run in **reverse**, up to **300 GHz**."
+      },
+      {
+       "id": "M2.V6.C014",
+       "front": "Why are waveguides used for radar?",
+       "back": "Simple cables suit **low frequencies**; **coax** has lower loss; **waveguides** (a \"hose\" with nothing inside) have the **lowest loss** at **microwave** frequencies, but do not work at low ones."
+      },
+      {
+       "id": "M2.V6.C015",
+       "front": "What can go wrong at a waveguide joint, and how is it solved?",
+       "back": "A poor joint causes **arcing and sparking**. A **λ/4 transformer** groove turns the seal gap into an electrical **short**."
+      },
+      {
+       "id": "M2.V6.C016",
+       "front": "How does a weather radar switch to map mode?",
+       "back": "The **polarization** changes from **vertical to horizontal** (rotary ferrite in the feedhorn), so a **spoiler grid** makes a wider **map beam** that scans the **ground**."
+      }
+     ],
+     "batch": 6,
+     "ref": "13.4",
+     "pages": "538–648"
+    },
+    {
+     "id": "M2.V7",
+     "name": "Navigation",
+     "cardsName": "Batch 07 · Study Cards · pages 649–759",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V7.QZ",
+      "name": "Batch 07 · Mock Exam · pages 649–759",
+      "questions": [
+       {
+        "id": "M2.V7.Q1",
+        "question": "Which antenna sends the SSR control pulse P2?",
+        "options": [
+         "The omnidirectional antenna",
+         "The directional antenna",
+         "The aircraft antenna"
+        ],
+        "correct": 0,
+        "explain": "P2 is sent by the omnidirectional antenna 2 µs after P1."
+       },
+       {
+        "id": "M2.V7.Q2",
+        "question": "What normally controls the DME interrogator?",
+        "options": [
+         "The ATC control panel",
+         "The flight management computer",
+         "The audio control panel"
+        ],
+        "correct": 1,
+        "explain": "The DME is controlled by the left or right FMC."
+       },
+       {
+        "id": "M2.V7.Q3",
+        "question": "Where are the radio altimeter antennas mounted?",
+        "options": [
+         "On the vertical stabilizer",
+         "On the top of the fuselage",
+         "At the bottom of the fuselage"
+        ],
+        "correct": 2,
+        "explain": "The 2 flush antennas are at the bottom of the fuselage."
+       },
+       {
+        "id": "M2.V7.Q4",
+        "question": "What distance does the DME measure?",
+        "options": [
+         "The height above the ground station",
+         "The slant distance to the ground station",
+         "The ground distance to the ground station"
+        ],
+        "correct": 1,
+        "explain": "DME measures the slant distance from aircraft to station."
+       },
+       {
+        "id": "M2.V7.Q5",
+        "question": "What does ADS-B OUT do?",
+        "options": [
+         "Shows other aircraft to the crew",
+         "Sends data only when ATC asks",
+         "Sends aircraft data automatically to ATC"
+        ],
+        "correct": 2,
+        "explain": "ADS-B OUT automatically transmits aircraft parameters to ATC."
+       },
+       {
+        "id": "M2.V7.Q6",
+        "question": "What frequency range does the DME use?",
+        "options": [
+         "962 to 1213 MHz",
+         "4200 to 4400 MHz",
+         "108 to 118 MHz"
+        ],
+        "correct": 0,
+        "explain": "DME operates from 962 to 1213 MHz."
+       },
+       {
+        "id": "M2.V7.Q7",
+        "question": "What is the measured radio altimeter time converted into?",
+        "options": [
+         "A DC voltage or an ARINC data bus",
+         "A Morse code tone for the crew",
+         "A frequency shown on the RMI"
+        ],
+        "correct": 0,
+        "explain": "The time is converted to a DC analog voltage or ARINC data."
+       },
+       {
+        "id": "M2.V7.Q8",
+        "question": "Who calculates the ground speed shown on the ATC screen?",
+        "options": [
+         "The air data computer",
+         "The aircraft transponder",
+         "The ground station computer"
+        ],
+        "correct": 2,
+        "explain": "Ground speed is calculated by the ground station, not sent by the aircraft."
+       },
+       {
+        "id": "M2.V7.Q9",
+        "question": "Where is the DME interrogator located?",
+        "options": [
+         "In the tail cone, near the APU",
+         "In the cockpit, behind the seats",
+         "In the electronic compartment"
+        ],
+        "correct": 2,
+        "explain": "The interrogator is in the electronic compartment."
+       },
+       {
+        "id": "M2.V7.Q10",
+        "question": "What do ADS-A reports replace?",
+        "options": [
+         "Voice position reports",
+         "Transponder codes",
+         "Weather radar"
+        ],
+        "correct": 0,
+        "explain": "ADS-A is a replacement for voice position reports."
+       },
+       {
+        "id": "M2.V7.Q11",
+        "question": "What does the analog radio height bar on the PFD do at touchdown?",
+        "options": [
+         "It touches the horizon",
+         "It turns red",
+         "It disappears"
+        ],
+        "correct": 0,
+        "explain": "The bar moves up on descent and touches the horizon at touchdown."
+       },
+       {
+        "id": "M2.V7.Q12",
+        "question": "How many DME systems are normally installed?",
+        "options": [
+         "One",
+         "Two",
+         "Three"
+        ],
+        "correct": 1,
+        "explain": "Normally two independent DME systems are installed."
+       },
+       {
+        "id": "M2.V7.Q13",
+        "question": "What protocol do ADS-A reports use?",
+        "options": [
+         "ACARS",
+         "Mode S",
+         "DPSK"
+        ],
+        "correct": 0,
+        "explain": "ADS-A reports use ACARS as the protocol."
+       },
+       {
+        "id": "M2.V7.Q14",
+        "question": "What does the top of a DDRMI show?",
+        "options": [
+         "The ADF 1 and ADF 2 bearings",
+         "The VOR 1 and VOR 2 frequencies",
+         "The DME 1 and DME 2 distances"
+        ],
+        "correct": 2,
+        "explain": "DME 1 (left) and DME 2 (right) distances are shown at the top."
+       },
+       {
+        "id": "M2.V7.Q15",
+        "question": "Where does the pilot get the Mode A code from?",
+        "options": [
+         "From the flight plan printout",
+         "From ATC by voice",
+         "From the air data computer"
+        ],
+        "correct": 1,
+        "explain": "The pilot gets the squawk from ATC by voice and sets it on the panel."
+       },
+       {
+        "id": "M2.V7.Q16",
+        "question": "What are the DME secondary channels used for?",
+        "options": [
+         "To find the best DME-DME pair",
+         "To tune the ILS paired DME",
+         "To receive the station ident"
+        ],
+        "correct": 0,
+        "explain": "Secondary channels give the best DME-DME pair for rho/rho navigation."
+       },
+       {
+        "id": "M2.V7.Q17",
+        "question": "What is DME navigation based on?",
+        "options": [
+         "Measuring signal strength",
+         "Measuring transmission time",
+         "Measuring phase difference"
+        ],
+        "correct": 1,
+        "explain": "DME is based on transmission time measurements."
+       },
+       {
+        "id": "M2.V7.Q18",
+        "question": "What does ADS-B OUT use to transmit?",
+        "options": [
+         "The Mode S 1090 MHz extended squitter",
+         "The VHF data radio on 131 MHz",
+         "The SATCOM data unit on L-band"
+        ],
+        "correct": 0,
+        "explain": "ADS-B OUT uses the transponder's Mode S 1090 MHz extended squitter."
+       },
+       {
+        "id": "M2.V7.Q19",
+        "question": "What replaces the rising runway on an ADI if the radio altimeter fails?",
+        "options": [
+         "A red RA label",
+         "The RUNWAY flag",
+         "A DH light"
+        ],
+        "correct": 1,
+        "explain": "The rising runway is replaced by the RUNWAY flag."
+       },
+       {
+        "id": "M2.V7.Q20",
+        "question": "Why is a secondary radar reply stronger than a primary echo?",
+        "options": [
+         "It uses a higher frequency",
+         "It is a transmitted reply, not an echo",
+         "It uses a larger antenna"
+        ],
+        "correct": 1,
+        "explain": "The reply is not an echo, so it does not suffer the same weakening."
+       },
+       {
+        "id": "M2.V7.Q21",
+        "question": "How many ground stations can a DME work with in directed scan mode?",
+        "options": [
+         "Only one",
+         "Up to 200",
+         "One to five"
+        ],
+        "correct": 2,
+        "explain": "In directed scan the DME can work with one to five stations."
+       },
+       {
+        "id": "M2.V7.Q22",
+        "question": "How often does ADS-B send position and flight data?",
+        "options": [
+         "Once a minute, on request",
+         "Only when ATC asks for it",
+         "Continuously, once per second"
+        ],
+        "correct": 2,
+        "explain": "Data is sent continuously, once per second, on 1090 MHz Mode S."
+       },
+       {
+        "id": "M2.V7.Q23",
+        "question": "How does the interrogator find its own replies among many pulses?",
+        "options": [
+         "By using its own special frequency",
+         "By varying its pulse repetition rate (jittering)",
+         "By sending a code with each pulse"
+        ],
+        "correct": 1,
+        "explain": "Jittering the repetition rate lets the interrogator find its own pulse pairs."
+       },
+       {
+        "id": "M2.V7.Q24",
+        "question": "What do controllers call the information shown for each aircraft?",
+        "options": [
+         "A plot",
+         "A squawk",
+         "A tag"
+        ],
+        "correct": 2,
+        "explain": "Controllers call this information a tag."
+       },
+       {
+        "id": "M2.V7.Q25",
+        "question": "What is flight level referenced to?",
+        "options": [
+         "The local pressure at the airport",
+         "The standard pressure of 1013.25 hPa",
+         "The ground directly below"
+        ],
+        "correct": 1,
+        "explain": "Flight level is barometric altitude above the 1013.25 hPa level."
+       },
+       {
+        "id": "M2.V7.Q26",
+        "question": "What does Rho-Theta navigation use to find position?",
+        "options": [
+         "Distance and direction from one beacon",
+         "Directions from two beacons",
+         "Distances from three beacons"
+        ],
+        "correct": 0,
+        "explain": "Rho-Theta uses range and bearing from a beacon."
+       },
+       {
+        "id": "M2.V7.Q27",
+        "question": "Where are ADS-A reports sent periodically?",
+        "options": [
+         "Only on the ground before departure",
+         "Over areas without radar, such as oceans",
+         "Only near large airports with radar"
+        ],
+        "correct": 1,
+        "explain": "Over oceanic and polar areas without radar, reports are sent periodically."
+       },
+       {
+        "id": "M2.V7.Q28",
+        "question": "What does the air traffic control (ATC) system do?",
+        "options": [
+         "Lands the aircraft automatically",
+         "Measures the aircraft's height",
+         "Monitors and controls air traffic"
+        ],
+        "correct": 2,
+        "explain": "ATC monitors and controls air traffic."
+       },
+       {
+        "id": "M2.V7.Q29",
+        "question": "How does the radio altimeter find the height?",
+        "options": [
+         "From the time the signal takes to reach the ground and return",
+         "From the air pressure measured around the aircraft",
+         "From the strength of the echo received from the ground"
+        ],
+        "correct": 0,
+        "explain": "The travel time of the reflected signal is changed into absolute altitude."
+       },
+       {
+        "id": "M2.V7.Q30",
+        "question": "Which interrogation must use the P5 pulse?",
+        "options": [
+         "The Mode C interrogation",
+         "The Mode A interrogation",
+         "The Mode S-only all call"
+        ],
+        "correct": 2,
+        "explain": "P5 must be used with the Mode S-only all call to stop side lobe replies."
+       },
+       {
+        "id": "M2.V7.Q31",
+        "question": "What is the radio altimeter's operating range?",
+        "options": [
+         "0 ft to 10,000 ft",
+         "-20 ft to +2500 ft",
+         "-1000 ft to +50,000 ft"
+        ],
+        "correct": 1,
+        "explain": "The operational range is -20 ft to +2500 ft."
+       },
+       {
+        "id": "M2.V7.Q32",
+        "question": "What height does the radio altimeter measure?",
+        "options": [
+         "From the extended main gear to the ground",
+         "From the nose to the runway threshold",
+         "From the cockpit to sea level"
+        ],
+        "correct": 0,
+        "explain": "It measures height between the extended main gear and the ground (AGL)."
+       },
+       {
+        "id": "M2.V7.Q33",
+        "question": "Why do Mode S transponders also have a top antenna?",
+        "options": [
+         "To talk to the TCAS of higher aircraft",
+         "To talk to ATC by satellite link",
+         "To receive signals from GPS satellites"
+        ],
+        "correct": 0,
+        "explain": "The top antenna allows communication with TCAS of aircraft above."
+       },
+       {
+        "id": "M2.V7.Q34",
+        "question": "Why does ATC need more than primary radar?",
+        "options": [
+         "Primary radar has too short a range",
+         "Primary radar cannot tell the aircraft apart",
+         "Primary radar does not work at night"
+        ],
+        "correct": 1,
+        "explain": "Primary radar only gives echoes; ATC needs to tell aircraft apart."
+       },
+       {
+        "id": "M2.V7.Q35",
+        "question": "What does the altitude source switch select?",
+        "options": [
+         "The air data system for Mode C",
+         "The squawk code to be sent",
+         "The transponder that is in use"
+        ],
+        "correct": 0,
+        "explain": "It selects the air data system giving the Mode C altitude."
+       },
+       {
+        "id": "M2.V7.Q36",
+        "question": "When does the pilot press the IDENT button?",
+        "options": [
+         "After every take-off, as part of the checklist",
+         "When the aircraft enters a new airspace sector",
+         "When ATC asks to confirm the aircraft's identity"
+        ],
+        "correct": 2,
+        "explain": "IDENT is pressed when ATC asks for confirmation; it gives an SPI on the screen."
+       },
+       {
+        "id": "M2.V7.Q37",
+        "question": "What makes selective interrogation possible in Mode S?",
+        "options": [
+         "Each aircraft has a different squawk for life",
+         "Each aircraft has a unique airframe address",
+         "Each aircraft uses its own frequency"
+        ],
+        "correct": 1,
+        "explain": "Mode S aircraft have a unique airframe address code."
+       },
+       {
+        "id": "M2.V7.Q38",
+        "question": "What does a transponder send in Mode A?",
+        "options": [
+         "A four-digit identification code",
+         "The barometric altitude",
+         "A unique airframe address"
+        ],
+        "correct": 0,
+        "explain": "Mode A sends a four-digit identification code (squawk)."
+       },
+       {
+        "id": "M2.V7.Q39",
+        "question": "What does a 180° phase shift mean in DPSK?",
+        "options": [
+         "Logic 0",
+         "End of message",
+         "Logic 1"
+        ],
+        "correct": 2,
+        "explain": "A 180° phase shift means 1; no shift means 0."
+       },
+       {
+        "id": "M2.V7.Q40",
+        "question": "Where is the ATC transponder antenna that all transponders have?",
+        "options": [
+         "On the top of the aircraft",
+         "On the vertical stabilizer",
+         "At the bottom of the aircraft"
+        ],
+        "correct": 2,
+        "explain": "All transponders have one antenna at the bottom."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V7.C001",
+       "front": "What does the DME measure, and how?",
+       "back": "The **slant distance** to the station. It is a **secondary radar**: the aircraft **interrogates**, the station **replies**, and the **time** gives the distance."
+      },
+      {
+       "id": "M2.V7.C002",
+       "front": "How does a DME find its own replies among all the pulses?",
+       "back": "By **jittering**: it varies its **pulse repetition rate**, so only its own replies line up in time."
+      },
+      {
+       "id": "M2.V7.C003",
+       "front": "What happens at a DME station with no aircraft near?",
+       "back": "It sends random **squitter** pulses. When an aircraft hears them it starts **interrogating**, and the station swaps squitter for **replies**."
+      },
+      {
+       "id": "M2.V7.C004",
+       "front": "How is the DME tuned and shown on charts?",
+       "back": "It is **paired with a VOR or localizer**, so it tunes **automatically**. A **D** in front of the VOR frequency shows a DME is there."
+      },
+      {
+       "id": "M2.V7.C005",
+       "front": "How does a scanning DME help the FMS?",
+       "back": "In **directed scan** it works with **one to five** stations: **primary** channels set by the FMC, **secondary** ones for the best **DME-DME pair**. In **free scan** it cycles **all 200** channels."
+      },
+      {
+       "id": "M2.V7.C006",
+       "front": "How is DME shown on the displays, and what shows a problem?",
+       "back": "On the **ND** (and the **PFD** for localizer DME). **Dashes** mean no reply; an **amber DME box** or a blank means a **failure**."
+      },
+      {
+       "id": "M2.V7.C007",
+       "front": "What does the radio altimeter measure, and over what range?",
+       "back": "The **height from the extended main gear to the ground**, from **-20 ft to +2500 ft**. It is a **primary radar** with antennas **under the fuselage**."
+      },
+      {
+       "id": "M2.V7.C008",
+       "front": "How do altitude, elevation, flight level and height differ?",
+       "back": "**Altitude**: above **MSL** (QNH). **Elevation**: a ground point above MSL. **Flight level**: above **1013.25 hPa**. **Height**: above the **ground**, from the radio altimeter."
+      },
+      {
+       "id": "M2.V7.C009",
+       "front": "How is radio height shown on the PFD?",
+       "back": "**Below 2500 ft** as a number; nearer the ground a **bar rises** to meet the **horizon** at touchdown. Loss gives a **red RA**."
+      },
+      {
+       "id": "M2.V7.C010",
+       "front": "What happens at decision height?",
+       "back": "A **voice** gives an alert and the height turns from **green to amber** with **DH**. The pilot decides: **land or go around**."
+      },
+      {
+       "id": "M2.V7.C011",
+       "front": "What do Modes A, C and S send?",
+       "back": "**A**: the four-digit **squawk** from ATC. **C**: **barometric altitude**. **S**: **selective** replies using a **unique airframe address**, needed for **TCAS**."
+      },
+      {
+       "id": "M2.V7.C012",
+       "front": "What do the transponder mode positions do?",
+       "back": "**STANDBY**: on, no replies (normal on the ground). **ALT RPTG OFF**: replies **without altitude**. **XPNDR**: **fully operative**."
+      },
+      {
+       "id": "M2.V7.C013",
+       "front": "Why does ATC use secondary radar as well as primary?",
+       "back": "Primary radar gives only **echoes**, weakened by weather. Secondary radar gets a **reply** from the transponder, giving **range, azimuth, altitude and identity**."
+      },
+      {
+       "id": "M2.V7.C014",
+       "front": "Which squawk codes must never be set on the ground, and why?",
+       "back": "**7500** hijacking, **7600** radio failure, **7700** emergency. Setting them raises a real **alarm**."
+      },
+      {
+       "id": "M2.V7.C015",
+       "front": "How do ADS-A, ADS-B and ADS-C differ?",
+       "back": "**ADS-A/C**: reports by **ACARS** data link to ATC, **on demand or by contract**, used **without radar** (oceans). **ADS-B OUT**: automatic **broadcast** on **1090 MHz**. **ADS-B IN**: received by other aircraft's **TCAS**."
+      },
+      {
+       "id": "M2.V7.C016",
+       "front": "What is an ADS-C contract?",
+       "back": "An agreement set by the **ground system** saying **what data** the aircraft sends and **when**. Up to **five** ground systems can hold contracts with one aircraft."
+      }
+     ],
+     "batch": 7,
+     "ref": "13.4",
+     "pages": "649–759"
+    },
+    {
+     "id": "M2.V9",
+     "name": "Navigation",
+     "cardsName": "Batch 09 · Study Cards · pages 884–1009",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V9.QZ",
+      "name": "Batch 09 · Mock Exam · pages 884–1009",
+      "questions": [
+       {
+        "id": "M2.V9.Q1",
+        "question": "How does the INS know if the aircraft is on the desired track?",
+        "options": [
+         "By comparing the desired and present positions",
+         "By measuring the wind and the heading",
+         "By receiving a signal from the ground"
+        ],
+        "correct": 0,
+        "explain": "The INS compares the desired position with the present position."
+       },
+       {
+        "id": "M2.V9.Q2",
+        "question": "How many satellites does GPS use?",
+        "options": [
+         "48 primary and up to 12 spares",
+         "24 primary and up to 6 spares",
+         "12 primary and up to 2 spares"
+        ],
+        "correct": 1,
+        "explain": "GPS uses 24 primary and up to 6 spare satellites."
+       },
+       {
+        "id": "M2.V9.Q3",
+        "question": "Why can the IRU calculate the present position?",
+        "options": [
+         "It gets the position from the ground",
+         "It has a GPS receiver inside",
+         "It has a very powerful computer"
+        ],
+        "correct": 2,
+        "explain": "The IRU has a very powerful computer to calculate present position."
+       },
+       {
+        "id": "M2.V9.Q4",
+        "question": "Where does the GPS unit mainly send its data?",
+        "options": [
+         "To the ATC transponder",
+         "To the flight management system",
+         "To the weather radar"
+        ],
+        "correct": 1,
+        "explain": "The GPS unit sends data primarily to the FMS for position."
+       },
+       {
+        "id": "M2.V9.Q5",
+        "question": "What is the angle Alpha?",
+        "options": [
+         "The angle between the platform and the aircraft",
+         "The angle between true and magnetic north",
+         "The angle between the platform and true north"
+        ],
+        "correct": 2,
+        "explain": "Alpha is the Z-position of the platform in relation to true north."
+       },
+       {
+        "id": "M2.V9.Q6",
+        "question": "What is the average INS/IRS position error?",
+        "options": [
+         "2 NM per hour or less",
+         "0.2 NM per hour or less",
+         "20 NM per hour or less"
+        ],
+        "correct": 0,
+        "explain": "The average error is 2 NM per hour or less."
+       },
+       {
+        "id": "M2.V9.Q7",
+        "question": "Where is each GPS antenna mounted?",
+        "options": [
+         "On top of the fuselage",
+         "On the vertical stabilizer",
+         "Under the fuselage"
+        ],
+        "correct": 0,
+        "explain": "Each GPS has one top-mounted antenna."
+       },
+       {
+        "id": "M2.V9.Q8",
+        "question": "What did accurate navigation always depend on before inertial systems?",
+        "options": [
+         "A long runway and a clear sky",
+         "A good autopilot and fuel supply",
+         "Clear weather or being near a transmitter"
+        ],
+        "correct": 2,
+        "explain": "Accurate navigation depended on clear weather or nearness to a transmitter."
+       },
+       {
+        "id": "M2.V9.Q9",
+        "question": "What is the basic need for precise inertial navigation?",
+        "options": [
+         "A good radio update from a VOR every hour",
+         "A strong and steady GPS signal at all times",
+         "Proper horizontal alignment of the platform"
+        ],
+        "correct": 2,
+        "explain": "The basic prerequisite is proper horizontal alignment of the platform."
+       },
+       {
+        "id": "M2.V9.Q10",
+        "question": "How do GPS satellites and receivers allow timing?",
+        "options": [
+         "They generate the same code at the same time",
+         "They send pulses at random times",
+         "They use the same antenna and frequency"
+        ],
+        "correct": 0,
+        "explain": "Satellites and receivers are synchronized to generate the same code at the same time."
+       },
+       {
+        "id": "M2.V9.Q11",
+        "question": "How does the IRS give magnetic heading without a flux valve?",
+        "options": [
+         "It has the magnetic variation stored in memory",
+         "It gets it from the VOR receiver",
+         "It measures the earth's magnetic field"
+        ],
+        "correct": 0,
+        "explain": "The computer knows the magnetic variation, so it needs no flux valve."
+       },
+       {
+        "id": "M2.V9.Q12",
+        "question": "What is an advantage of the gimbal platform?",
+        "options": [
+         "It has no moving parts at all",
+         "It needs only low computer performance",
+         "It never needs alignment"
+        ],
+        "correct": 1,
+        "explain": "It needs only low computer performance but has a sensitive mechanism."
+       },
+       {
+        "id": "M2.V9.Q13",
+        "question": "What are the problems of turning acceleration directly into a signal?",
+        "options": [
+         "Small accurate range and a non-linear output",
+         "High power use and a very slow response",
+         "Large size, high weight and high cost"
+        ],
+        "correct": 0,
+        "explain": "The accurate range is small and the output is not linear."
+       },
+       {
+        "id": "M2.V9.Q14",
+        "question": "How long does a GPS satellite take for one orbit?",
+        "options": [
+         "About 90 minutes",
+         "About 24 hours",
+         "About 12 hours"
+        ],
+        "correct": 2,
+        "explain": "Each satellite completes an orbit once every 12 hours."
+       },
+       {
+        "id": "M2.V9.Q15",
+        "question": "What affects a gimbal platform?",
+        "options": [
+         "Icing and corrosion",
+         "Drift and topple",
+         "Vibration and noise"
+        ],
+        "correct": 1,
+        "explain": "A platform is also affected by drift and topple."
+       },
+       {
+        "id": "M2.V9.Q16",
+        "question": "How long is the IRS align phase on the ground?",
+        "options": [
+         "About 10 minutes",
+         "About 1 hour",
+         "About 1 minute"
+        ],
+        "correct": 0,
+        "explain": "It needs a 10 minute align phase on the ground."
+       },
+       {
+        "id": "M2.V9.Q17",
+        "question": "How many GPS systems are usually installed?",
+        "options": [
+         "One",
+         "Two",
+         "Four"
+        ],
+        "correct": 1,
+        "explain": "Usually 2 GPSs are installed."
+       },
+       {
+        "id": "M2.V9.Q18",
+        "question": "How are the waypoints put into an INS?",
+        "options": [
+         "By the crew, step by step into the CDU",
+         "By the ground station through a data link",
+         "By the FMS automatically from its database"
+        ],
+        "correct": 0,
+        "explain": "The crew inserts the waypoints step by step into the CDU before flight."
+       },
+       {
+        "id": "M2.V9.Q19",
+        "question": "Why can the torque rebalancing current be used as the output?",
+        "options": [
+         "It is constant at all times",
+         "It is linear to the acceleration",
+         "It is linear to the speed"
+        ],
+        "correct": 1,
+        "explain": "The current that makes the magnetic field is linear to the acceleration."
+       },
+       {
+        "id": "M2.V9.Q20",
+        "question": "What happens in the gimbal cage step?",
+        "options": [
+         "The computer calculates the angle Alpha",
+         "The gimbals align with the aircraft attitude",
+         "The velocity outputs are set to zero"
+        ],
+        "correct": 1,
+        "explain": "In gimbal cage, the gimbals align with the aircraft attitude."
+       },
+       {
+        "id": "M2.V9.Q21",
+        "question": "What measures movements along the aircraft axes?",
+        "options": [
+         "Gyros",
+         "Flux valves",
+         "Accelerometers"
+        ],
+        "correct": 2,
+        "explain": "Movements along the axes are measured by accelerometers."
+       },
+       {
+        "id": "M2.V9.Q22",
+        "question": "Which GPS service is used by civil users?",
+        "options": [
+         "The precision positioning service (PPS)",
+         "The differential positioning service (DPS)",
+         "The standard positioning service (SPS)"
+        ],
+        "correct": 2,
+        "explain": "Civil users use SPS; PPS is for military users only."
+       },
+       {
+        "id": "M2.V9.Q23",
+        "question": "What coverage does a GPS antenna give?",
+        "options": [
+         "Lower hemisphere, from 0° to 90° below",
+         "Upper hemisphere, from 10° to 90° elevation",
+         "Only straight up, at 90° elevation"
+        ],
+        "correct": 1,
+        "explain": "It gives omnidirectional upper hemisphere coverage from 10° to 90°."
+       },
+       {
+        "id": "M2.V9.Q24",
+        "question": "Why does an INS have a position update in flight?",
+        "options": [
+         "Its gyros stop working after an hour",
+         "Its battery runs down in long flights",
+         "Its position error grows with time"
+        ],
+        "correct": 2,
+        "explain": "Because the error grows with time, the INS provides for a position update."
+       },
+       {
+        "id": "M2.V9.Q25",
+        "question": "What is the GPS P code?",
+        "options": [
+         "A short clear code that is easy to acquire",
+         "A long precision code that is hard to acquire",
+         "A voice code used for messages to the crew"
+        ],
+        "correct": 1,
+        "explain": "The P code is a long precision code at 10.23 Mbps, difficult to acquire."
+       },
+       {
+        "id": "M2.V9.Q26",
+        "question": "What does an INS create besides the present position?",
+        "options": [
+         "A desired flight track from the route waypoints",
+         "A list of nearby airports and runways",
+         "A weather map of the route ahead"
+        ],
+        "correct": 0,
+        "explain": "It creates a desired flight track from all geographic waypoints."
+       },
+       {
+        "id": "M2.V9.Q27",
+        "question": "Why must a fourth GPS satellite be received?",
+        "options": [
+         "To find the satellite's speed",
+         "To correct the receiver clock time",
+         "To give a second position fix"
+        ],
+        "correct": 1,
+        "explain": "A fourth satellite is needed for time correction of the receiver clock."
+       },
+       {
+        "id": "M2.V9.Q28",
+        "question": "What must the computer do in a strap down INS?",
+        "options": [
+         "Use only the magnetic compass and the flux valve for heading",
+         "Keep a mechanical platform level with gyros and torque motors",
+         "Calculate all turns and accelerations by coordinate transformation"
+        ],
+        "correct": 2,
+        "explain": "In a strap down INS, all movements are calculated with coordinate transformations."
+       },
+       {
+        "id": "M2.V9.Q29",
+        "question": "What was the INS before satellite navigation?",
+        "options": [
+         "The standard navigation system in long-range aircraft",
+         "The standard landing system for short runways",
+         "The standard radio for oceanic voice calls"
+        ],
+        "correct": 0,
+        "explain": "The INS was the standard system in long-range aircraft."
+       },
+       {
+        "id": "M2.V9.Q30",
+        "question": "What does each GPS satellite include in its signals?",
+        "options": [
+         "The weather on the ground",
+         "The aircraft's position",
+         "The time of the transmission"
+        ],
+        "correct": 2,
+        "explain": "Each satellite permanently sends signals including the time of transmission."
+       },
+       {
+        "id": "M2.V9.Q31",
+        "question": "What did the first inertial systems use as a platform?",
+        "options": [
+         "An electronic computer",
+         "A mechanical framework",
+         "A laser beam"
+        ],
+        "correct": 1,
+        "explain": "The first systems used a mechanical framework as a platform."
+       },
+       {
+        "id": "M2.V9.Q32",
+        "question": "Which azimuth systems are mostly used in civil aircraft?",
+        "options": [
+         "Free azimuth and wander azimuth",
+         "Magnetic azimuth and grid azimuth",
+         "North-pointed azimuth only"
+        ],
+        "correct": 0,
+        "explain": "Free and wander azimuth are used in civil aircraft; north-pointed in military."
+       },
+       {
+        "id": "M2.V9.Q33",
+        "question": "How often does the C/A code repeat?",
+        "options": [
+         "Every millisecond",
+         "Every 12 hours",
+         "Every seven days"
+        ],
+        "correct": 0,
+        "explain": "The C/A code is unique to each satellite and repeats every millisecond."
+       },
+       {
+        "id": "M2.V9.Q34",
+        "question": "What can give an automatic position update?",
+        "options": [
+         "The weather radar and the radio altimeter",
+         "Radio navigation systems like DME or GPS",
+         "The flux valve and the standby compass"
+        ],
+        "correct": 1,
+        "explain": "A position update can come from DME or GPS."
+       },
+       {
+        "id": "M2.V9.Q35",
+        "question": "What does the gimbal platform directly give?",
+        "options": [
+         "Roll and pitch attitude and platform heading",
+         "Altitude, airspeed and vertical speed",
+         "Position, ground speed and wind"
+        ],
+        "correct": 0,
+        "explain": "The gimbal platform directly gives roll, pitch and platform heading."
+       },
+       {
+        "id": "M2.V9.Q36",
+        "question": "How is a gimbal platform positioned?",
+        "options": [
+         "Pointed at true north and tilted down",
+         "Parallel to the aircraft floor at all times",
+         "Parallel to the earth's surface, whatever the attitude"
+        ],
+        "correct": 2,
+        "explain": "The platform is always parallel to the earth's surface, independent of attitude."
+       },
+       {
+        "id": "M2.V9.Q37",
+        "question": "Which instruments does the INS or IRS completely take over?",
+        "options": [
+         "The radio altimeters and VOR receivers",
+         "The vertical and directional gyros",
+         "The airspeed and altitude indicators"
+        ],
+        "correct": 1,
+        "explain": "The INS/IRS takes over the vertical and directional gyros."
+       },
+       {
+        "id": "M2.V9.Q38",
+        "question": "What is inertial navigation independent of?",
+        "options": [
+         "Weather, time of day and transmitters",
+         "Electrical power and computers",
+         "Gyros and accelerometers"
+        ],
+        "correct": 0,
+        "explain": "It functions completely independently of weather, time of day and transmitters."
+       },
+       {
+        "id": "M2.V9.Q39",
+        "question": "Why is the system called an inertial navigation system?",
+        "options": [
+         "It uses radio waves to calculate position",
+         "It uses the earth's magnetic field",
+         "It measures acceleration to calculate position"
+        ],
+        "correct": 2,
+        "explain": "Because it measures acceleration to calculate position."
+       },
+       {
+        "id": "M2.V9.Q40",
+        "question": "What did navigators use for dead reckoning?",
+        "options": [
+         "Radio bearings and distances",
+         "Satellite positions",
+         "Speed, time and course"
+        ],
+        "correct": 2,
+        "explain": "In dead reckoning, routes were calculated using speed, time and course."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V9.C001",
+       "front": "How does GPS find the aircraft's position?",
+       "back": "Each satellite sends its **time**. The receiver times the signal to get the **distance**, and with the satellite positions from its **almanac** works out latitude, longitude and altitude from **at least four** satellites."
+      },
+      {
+       "id": "M2.V9.C002",
+       "front": "How does differential GPS improve accuracy?",
+       "back": "A **reference station** at a known position works out the GPS **error** and sends it to the aircraft, improving accuracy from about **13 m to 1 m**."
+      },
+      {
+       "id": "M2.V9.C003",
+       "front": "Why does GPS need a fourth satellite?",
+       "back": "Three distances fix the position, but the receiver clock is not an atomic clock. The **fourth** satellite corrects the **receiver clock** error."
+      },
+      {
+       "id": "M2.V9.C004",
+       "front": "How does GPS measure the signal travel time?",
+       "back": "Satellite and receiver make the **same pseudo-random code** at the **same time**; the delay of the received code is the **travel time**."
+      },
+      {
+       "id": "M2.V9.C005",
+       "front": "What signals and codes can civil GPS users use?",
+       "back": "Only the **L1** signal and the short **C/A code**. The long **P code** (encrypted as **Y code**) on L1 and L2 is for **authorized, mainly military** users."
+      },
+      {
+       "id": "M2.V9.C006",
+       "front": "Which quality matters most in a navigation system, and what is accuracy?",
+       "back": "**Integrity** matters most for safety. **Accuracy** is how well a measured value **agrees with a reference** value; error is the **difference**."
+      },
+      {
+       "id": "M2.V9.C007",
+       "front": "How does GLS work, and why is it better than ILS?",
+       "back": "GPS data is corrected by a **GBAS** (range about **23 NM**) sent by VHF. One GBAS serves **several runways** and gives capabilities **ILS cannot**; future **CAT II/III**."
+      },
+      {
+       "id": "M2.V9.C008",
+       "front": "What made inertial navigation a breakthrough?",
+       "back": "It measures **acceleration** to find position, so it works **independently of weather, time of day and transmitters**."
+      },
+      {
+       "id": "M2.V9.C009",
+       "front": "Why does an inertial system need position updates?",
+       "back": "Its error grows by up to **2 NM per hour**. Updates come from **DME or GPS**; with an IRS this is done in the **FMS**."
+      },
+      {
+       "id": "M2.V9.C010",
+       "front": "How does an accelerometer give speed and distance?",
+       "back": "A **pendulum** mass is held at null by **torque rebalancing**; the current is **linear** to acceleration. **Integrating** gives **speed**, again gives **distance**."
+      },
+      {
+       "id": "M2.V9.C011",
+       "front": "How does a gimbal platform keep the accelerometers level?",
+       "back": "It is held **parallel to the earth's surface** by gyros and torque motors; the **computer** corrects for **drift and topple** and keeps it **Schuler-aligned**."
+      },
+      {
+       "id": "M2.V9.C012",
+       "front": "What is a strap down system?",
+       "back": "All sensors are **fixed to the aircraft**. **Laser rate gyros** measure rotation, and the **computer** calculates **attitude** and corrects for **gravity**. It replaced costly mechanical platforms."
+      },
+      {
+       "id": "M2.V9.C013",
+       "front": "What can an INS do that an IRS cannot?",
+       "back": "It makes a **desired track** from **waypoints** the crew enters in the **CDU** and compares it with the present position to steer the autopilot."
+      },
+      {
+       "id": "M2.V9.C014",
+       "front": "What must happen during INS alignment?",
+       "back": "Enter the **present position** first; the aircraft **must not roll**; a wrong latitude gives a **warning**. It takes about **15 minutes** in **eight steps**."
+      },
+      {
+       "id": "M2.V9.C015",
+       "front": "What happens if the INS leaves NAV mode?",
+       "back": "The **navigation data is lost**, so the switch **locks** in NAV. In **ATT REF** it gives attitude only, and needs a **new ground alignment**."
+      },
+      {
+       "id": "M2.V9.C016",
+       "front": "How does an IRS differ from an INS?",
+       "back": "It is a **strap down** laser gyro system; it knows the **magnetic variation** (no flux valve), aligns in about **10 minutes**, and the **FMS** does the route."
+      },
+      {
+       "id": "M2.V9.C017",
+       "front": "What precautions apply when using the IRS on the ground?",
+       "back": "Select **ALIGN and NAV only with the aircraft not moving**. After switching off, do **not pull the breakers** until the **ALIGN light** goes out."
+      }
+     ],
+     "batch": 9,
+     "ref": "13.4",
+     "pages": "884–1009"
+    },
+    {
+     "id": "M2.V10",
+     "name": "Navigation",
+     "cardsName": "Batch 10 · Study Cards · pages 1010–1134",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V10.QZ",
+      "name": "Batch 10 · Mock Exam · pages 1010–1134",
+      "questions": [
+       {
+        "id": "M2.V10.Q1",
+        "question": "What procedure values are saved in the navigation database?",
+        "options": [
+         "Thrust reduction, acceleration and step climb values",
+         "Engine start, taxi and shutdown times for each flight",
+         "Cabin pressure, temperature and humidity limits"
+        ],
+        "correct": 0,
+        "explain": "Thrust reduction altitude, acceleration altitude and step climb data are saved."
+       },
+       {
+        "id": "M2.V10.Q2",
+        "question": "What does pressing the DATA key on the MCDU show?",
+        "options": [
+         "The fuel page",
+         "The DATA INDEX",
+         "The flight plan"
+        ],
+        "correct": 1,
+        "explain": "Pressing DATA displays the DATA INDEX."
+       },
+       {
+        "id": "M2.V10.Q3",
+        "question": "Where were waypoints historically located?",
+        "options": [
+         "At the centres of large cities",
+         "At the centres of large airports",
+         "At ground radio navigation stations"
+        ],
+        "correct": 2,
+        "explain": "Waypoints historically coincide with NDB, VOR or TACAN stations."
+       },
+       {
+        "id": "M2.V10.Q4",
+        "question": "What two aims led to the first flight management computers?",
+        "options": [
+         "Lowering weight and simplifying maintenance",
+         "Saving fuel in the vertical profile and lateral navigation",
+         "Reducing noise and improving cabin comfort"
+        ],
+        "correct": 1,
+        "explain": "They were used to optimize the vertical profile to save fuel and for lateral navigation."
+       },
+       {
+        "id": "M2.V10.Q5",
+        "question": "What is navigation in the broad sense?",
+        "options": [
+         "Only the use of radio beacons to find a position",
+         "Only the use of satellites to find a position",
+         "All actions to guide a craft from one place to another on a track"
+        ],
+        "correct": 2,
+        "explain": "Navigation is all actions required to guide a craft along a defined track."
+       },
+       {
+        "id": "M2.V10.Q6",
+        "question": "What happens if critical data does not match between the two FMCs?",
+        "options": [
+         "Both switch to independent mode",
+         "The pilots must reset both FMCs",
+         "One FMC switches off for the flight"
+        ],
+        "correct": 0,
+        "explain": "If a mismatch cannot be resynchronized, both FMCs switch to independent mode."
+       },
+       {
+        "id": "M2.V10.Q7",
+        "question": "What is the lowest line of the MCDU display called?",
+        "options": [
+         "The scratchpad",
+         "The label line",
+         "The title line"
+        ],
+        "correct": 0,
+        "explain": "The lowest line is the scratchpad."
+       },
+       {
+        "id": "M2.V10.Q8",
+        "question": "What must the maintenance specialist understand to maintain an FMCS?",
+        "options": [
+         "Air traffic control rules in full",
+         "Airline cost accounting in full",
+         "Pilot terms, to a limited extent"
+        ],
+        "correct": 2,
+        "explain": "The maintenance specialist has to understand pilot-specific terms to a limited extent."
+       },
+       {
+        "id": "M2.V10.Q9",
+        "question": "What do all the ATS routes in an area make up?",
+        "options": [
+         "A flight plan",
+         "A terminal area",
+         "A route network"
+        ],
+        "correct": 2,
+        "explain": "All ATS routes in an area make up a route network."
+       },
+       {
+        "id": "M2.V10.Q10",
+        "question": "What are top of climb and top of descent?",
+        "options": [
+         "Pseudo-waypoints calculated by the FMS",
+         "Reporting points chosen by ATC",
+         "Radio beacons placed on the ground"
+        ],
+        "correct": 0,
+        "explain": "The FMS calculates pseudo-waypoints like T/C and T/D."
+       },
+       {
+        "id": "M2.V10.Q11",
+        "question": "What rules were published in JAA Leaflet No. 3?",
+        "options": [
+         "Rules for using GPS as an FMS position sensor",
+         "Rules for weather radar testing",
+         "Rules for ACARS message formats"
+        ],
+        "correct": 0,
+        "explain": "It published rules for integrating GPS as a position sensor for FMS."
+       },
+       {
+        "id": "M2.V10.Q12",
+        "question": "Why are fewer ground transmitters needed with RNAV?",
+        "options": [
+         "RNAV uses only one strong transmitter",
+         "RNAV uses several navigation aids together",
+         "RNAV needs no navigation aids at all"
+        ],
+        "correct": 1,
+        "explain": "RNAV achieves performance using several aids, so fewer are needed along an airway."
+       },
+       {
+        "id": "M2.V10.Q13",
+        "question": "Which functions were added as microprocessors improved?",
+        "options": [
+         "Waypoint time and fuel predictions, a database and 4D guidance",
+         "Weather radar, TCAS and windshear warning",
+         "Voice recording, data link and satellite telephone"
+        ],
+        "correct": 0,
+        "explain": "Added functions were time and fuel predictions, a navigation database and 4D guidance."
+       },
+       {
+        "id": "M2.V10.Q14",
+        "question": "What happens to T/C and T/D on the ideal parabolic profile?",
+        "options": [
+         "They do not exist",
+         "They are far apart",
+         "They are at the same point"
+        ],
+        "correct": 2,
+        "explain": "On the ideal parabolic path the T/C and T/D coincide."
+       },
+       {
+        "id": "M2.V10.Q15",
+        "question": "What were IFR navigation procedures based on up to now?",
+        "options": [
+         "Satellite navigation only",
+         "Single radio navigation aids",
+         "Inertial systems only"
+        ],
+        "correct": 1,
+        "explain": "Primary IFR procedures used single radio navigation aids."
+       },
+       {
+        "id": "M2.V10.Q16",
+        "question": "What does the FMC initialization start with?",
+        "options": [
+         "A hardware test at power-up",
+         "An ATC clearance",
+         "A GPS position fix"
+        ],
+        "correct": 0,
+        "explain": "System initialization starts with an extensive hardware test at power-up."
+       },
+       {
+        "id": "M2.V10.Q17",
+        "question": "How do pilots communicate with the FMC system?",
+        "options": [
+         "Through the audio panel",
+         "Through the MCDU",
+         "Through the ATC panel"
+        ],
+        "correct": 1,
+        "explain": "Pilots communicate with the FMC through the MCDU."
+       },
+       {
+        "id": "M2.V10.Q18",
+        "question": "Who defines airways for planning purposes?",
+        "options": [
+         "The national air traffic services",
+         "The aircraft manufacturers",
+         "The airline operators"
+        ],
+        "correct": 0,
+        "explain": "Airways are defined by the national ATS organisations."
+       },
+       {
+        "id": "M2.V10.Q19",
+        "question": "Who does the flight management computer system serve?",
+        "options": [
+         "Only the maintenance staff, as a test tool",
+         "Only the pilots, as a tool for conducting the flight",
+         "Only air traffic control, as a tracking tool"
+        ],
+        "correct": 1,
+        "explain": "The FMCS serves exclusively the pilots as a tool for the complex conduct of a flight."
+       },
+       {
+        "id": "M2.V10.Q20",
+        "question": "What are airways made up of?",
+        "options": [
+         "Straight lines between airports",
+         "Great circle segments between waypoints",
+         "Curved paths between radio beacons"
+        ],
+        "correct": 1,
+        "explain": "Airways are great circle segments connecting waypoints."
+       },
+       {
+        "id": "M2.V10.Q21",
+        "question": "What else besides the RNP type sets the minimum separation?",
+        "options": [
+         "Only the aircraft type and its weight",
+         "Only the weather and the time of day",
+         "Traffic density, routes, links, surveillance and ATC"
+        ],
+        "correct": 2,
+        "explain": "Traffic density, route complexity, communication, surveillance and ATC also count."
+       },
+       {
+        "id": "M2.V10.Q22",
+        "question": "How does RAIM spot a faulty satellite?",
+        "options": [
+         "It sends a warning message itself",
+         "It has a weaker signal than the rest",
+         "It causes a large position error in its set"
+        ],
+        "correct": 2,
+        "explain": "A faulty satellite produces a considerable position error when in the set."
+       },
+       {
+        "id": "M2.V10.Q23",
+        "question": "What identifies and controls each flight phase?",
+        "options": [
+         "The pilot, by hand",
+         "The FMS, by itself",
+         "ATC, by data link"
+        ],
+        "correct": 1,
+        "explain": "The FMS identifies and controls each flight phase autonomously."
+       },
+       {
+        "id": "M2.V10.Q24",
+        "question": "How many basic FMCS designs does ARINC 702 allow?",
+        "options": [
+         "Two",
+         "Five",
+         "Three"
+        ],
+        "correct": 2,
+        "explain": "ARINC 702 permits three basic system designs."
+       },
+       {
+        "id": "M2.V10.Q25",
+        "question": "What do pilots use the FMCS for on modern transport aircraft?",
+        "options": [
+         "As the main radio for ATC calls",
+         "As the central flight planning tool",
+         "As the backup attitude indicator"
+        ],
+        "correct": 1,
+        "explain": "In all modern transport aircraft, the FMCS is the central flight planning tool."
+       },
+       {
+        "id": "M2.V10.Q26",
+        "question": "What is the purpose of a terminal control area (TMA)?",
+        "options": [
+         "To protect aircraft approaching or leaving airports",
+         "To separate military and civil aircraft",
+         "To control aircraft at cruise altitude"
+        ],
+        "correct": 0,
+        "explain": "TMAs give special protection to aircraft approaching or departing."
+       },
+       {
+        "id": "M2.V10.Q27",
+        "question": "What speeds does the FMS calculate for climb, cruise and descent?",
+        "options": [
+         "Maximum operating speeds",
+         "ECON airspeeds or Mach numbers",
+         "Minimum control speeds"
+        ],
+        "correct": 1,
+        "explain": "For climb, cruise and descent, ECON speeds or Mach numbers are calculated."
+       },
+       {
+        "id": "M2.V10.Q28",
+        "question": "What can RAIM do with only five satellites?",
+        "options": [
+         "Nothing, it cannot work at all",
+         "Detect and exclude a faulty satellite",
+         "Detect a fault but not exclude it"
+        ],
+        "correct": 2,
+        "explain": "With five satellites only fault detection (FD) is possible."
+       },
+       {
+        "id": "M2.V10.Q29",
+        "question": "What must aircraft above FL100 in Europe have?",
+        "options": [
+         "At least one RNAV system meeting RNP 5",
+         "At least two GPS receivers",
+         "At least three inertial systems"
+        ],
+        "correct": 0,
+        "explain": "Above FL100 in Europe, at least one RNAV system meeting RNP 5 is required."
+       },
+       {
+        "id": "M2.V10.Q30",
+        "question": "What are the three parts of a lateral flight plan?",
+        "options": [
+         "Climb, cruise and descent",
+         "Take-off, cruise and landing",
+         "SID, enroute segment and STAR"
+        ],
+        "correct": 2,
+        "explain": "The lateral plan is split into SID, enroute and STAR."
+       },
+       {
+        "id": "M2.V10.Q31",
+        "question": "What does the FMC calculate from the three inertial positions?",
+        "options": [
+         "The highest of the three, the IRS peak position",
+         "A weighted average, the IRS mixed position",
+         "The position of IRS 1 alone, the IRS main position"
+        ],
+        "correct": 1,
+        "explain": "The FMC calculates a weighted average: the IRS mixed position."
+       },
+       {
+        "id": "M2.V10.Q32",
+        "question": "What does area navigation (RNAV) allow?",
+        "options": [
+         "Flying any track, independent of navaid airways",
+         "Flying only within sight of the ground",
+         "Flying only along airways marked by navaids"
+        ],
+        "correct": 0,
+        "explain": "RNAV allows navigating along any track independent of navaid-marked airways."
+       },
+       {
+        "id": "M2.V10.Q33",
+        "question": "What is an airway also called?",
+        "options": [
+         "An ATS route or RNAV route",
+         "A TMA route or CTR route",
+         "A SID route or STAR route"
+        ],
+        "correct": 0,
+        "explain": "An airway is also called an ATS route or RNAV route."
+       },
+       {
+        "id": "M2.V10.Q34",
+        "question": "Which sensors are used with GPS installed?",
+        "options": [
+         "Mainly the VOR and ADF",
+         "Mainly the IRS and GPS",
+         "Mainly the DME and ILS"
+        ],
+        "correct": 1,
+        "explain": "With GPS, the FMC primarily uses IRS and GPS on the ground and in the air."
+       },
+       {
+        "id": "M2.V10.Q35",
+        "question": "What does radio navigation depend on?",
+        "options": [
+         "Ground based aids like VOR, DME, NDB and ILS",
+         "The aircraft's own inertial system only",
+         "Satellites only, such as GPS and GLONASS"
+        ],
+        "correct": 0,
+        "explain": "Radio navigation uses ground based aids like VOR, DME, ADF/NDB, MLS and ILS."
+       },
+       {
+        "id": "M2.V10.Q36",
+        "question": "Why is an RNP 5 system called basic RNAV (B-RNAV)?",
+        "options": [
+         "It is the first system ever certified",
+         "It is the cheapest system on the market",
+         "It equals single radio aid accuracy en route"
+        ],
+        "correct": 2,
+        "explain": "Its accuracy equals a single radio navigation system en route."
+       },
+       {
+        "id": "M2.V10.Q37",
+        "question": "When does the FMC computation start?",
+        "options": [
+         "When the aircraft takes off",
+         "After all flight plan data are entered",
+         "As soon as the engines start"
+        ],
+        "correct": 1,
+        "explain": "Computation starts after entry of the vertical and lateral flight plan data."
+       },
+       {
+        "id": "M2.V10.Q38",
+        "question": "What does the FMC use to find the aircraft position?",
+        "options": [
+         "Data from several position sensors",
+         "Data from one GPS receiver only",
+         "Data from the pilot only"
+        ],
+        "correct": 0,
+        "explain": "The FMC uses data from several position sensors depending on availability and accuracy."
+       },
+       {
+        "id": "M2.V10.Q39",
+        "question": "What does area navigation need the computer to be supplied with?",
+        "options": [
+         "The weather and winds on the route",
+         "The fuel and weight of the aircraft",
+         "The best own position and exact UTC time"
+        ],
+        "correct": 2,
+        "explain": "RNAV needs the best possible own position and exact UTC."
+       },
+       {
+        "id": "M2.V10.Q40",
+        "question": "What is added to the IRS position to give the FM position?",
+        "options": [
+         "The wind vector",
+         "The magnetic variation",
+         "An error vector (bias)"
+        ],
+        "correct": 2,
+        "explain": "The FMS computes a bias that is added to the IRS position."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V10.C001",
+       "front": "What can a modern FMCS do that the first systems could not?",
+       "back": "Give **time and fuel predictions** for waypoints, use a **navigation database**, and fly **4D guidance** (exact time and altitude at a waypoint). Its layout is in **ARINC 702**."
+      },
+      {
+       "id": "M2.V10.C002",
+       "front": "What is the basic task of the FMCS, and what drives its \"economic\" profile?",
+       "back": "It gives optimized values for guidance on an **economic profile**. The profile depends on the **cost index**: the ratio of **time-related cost** to **fuel cost**."
+      },
+      {
+       "id": "M2.V10.C003",
+       "front": "What are the three FM operating modes?",
+       "back": "**Dual**: master and slave share data. **Independent**: after a data mismatch, each FMS runs alone, so **enter data on both MCDUs**. **Single**: when **one FMC fails**."
+      },
+      {
+       "id": "M2.V10.C004",
+       "front": "How do pilots work with the FMS through the MCDU?",
+       "back": "They type into the **scratchpad** (lowest line) and use **line select keys** to move data. They enter **constraints** for strategic planning and read **predictions**."
+      },
+      {
+       "id": "M2.V10.C005",
+       "front": "What are the three parts of a lateral flight plan?",
+       "back": "**SID** (runway to airways), **enroute** (within the airways), **STAR** (airways to runway). SIDs and STARs depend on the **active runway**."
+      },
+      {
+       "id": "M2.V10.C006",
+       "front": "What is in the navigation database, and how often is it updated?",
+       "back": "**Navaids, waypoints, airways, SIDs, STARs and approaches**, plus **company routes**. It is updated every **28 days** (ARINC 424)."
+      },
+      {
+       "id": "M2.V10.C007",
+       "front": "How do the active and secondary flight plans differ?",
+       "back": "**Active**: the path from take-off to destination that is flown and tuned. **Secondary**: an **alternative** routing or the **next flight**."
+      },
+      {
+       "id": "M2.V10.C008",
+       "front": "How does the FMS build the vertical profile?",
+       "back": "It calculates **ECON speeds** for climb, cruise and descent, applies **restrictions** (250 kt below 10,000 ft) and places **T/C and T/D** pseudo-waypoints."
+      },
+      {
+       "id": "M2.V10.C009",
+       "front": "How does the cost index change the flight?",
+       "back": "**CI 0**: minimum fuel, slow. **CI 999**: minimum time, fast. The airline sets it per route (**0–999**)."
+      },
+      {
+       "id": "M2.V10.C010",
+       "front": "What does the FMCS predict, and what makes it recalculate?",
+       "back": "**ETA, speed, altitude and fuel** at each waypoint and **EFOB** at destination. Any change to **flight plan, cost index or wind** causes a recalculation."
+      },
+      {
+       "id": "M2.V10.C011",
+       "front": "How does RNAV differ from radio navigation?",
+       "back": "Radio navigation flies **from one navaid to the next**. **RNAV** uses **several aids** to fly **any track**, so fewer ground stations are needed."
+      },
+      {
+       "id": "M2.V10.C012",
+       "front": "What do continuity, reliability, availability and integrity mean?",
+       "back": "**Continuity**: stays working during use. **Reliability**: works for a time without errors. **Availability**: working when needed. **Integrity**: data is **reliable**, with timely **warnings**."
+      },
+      {
+       "id": "M2.V10.C013",
+       "front": "What is RNP, and how is it shown?",
+       "back": "RNP is the **accuracy required** in an airspace (B-RNAV = **RNP 5**, 5 NM). The system estimates its **ANP (EPE)**: **HIGH** if better than RNP, **LOW** if worse."
+      },
+      {
+       "id": "M2.V10.C014",
+       "front": "Why is WGS 84 important?",
+       "back": "It is the **worldwide reference** for coordinates (from 1998), centred on the **earth's centre of gravity**. Its heights are not MSL, so **GPS altitude is not used** for vertical navigation."
+      },
+      {
+       "id": "M2.V10.C015",
+       "front": "How does the FMC find the FM position?",
+       "back": "It starts from the **IRS (mixed) position** and adds a **bias** from **GPS or radio** updates. The result is the best position: the **FM position**."
+      },
+      {
+       "id": "M2.V10.C016",
+       "front": "Why are GPS and IRS combined?",
+       "back": "**GPS**: excellent **long-term** accuracy but can lose signals. **IRS**: good **short-term** accuracy, no outages, but **drifts**. Blended, they give the **hybrid position**."
+      },
+      {
+       "id": "M2.V10.C017",
+       "front": "How does RAIM check GPS integrity?",
+       "back": "The receiver compares positions from different satellite sets. **5 satellites**: fault **detection** only. **6 satellites**: fault **detection and exclusion**."
+      }
+     ],
+     "batch": 10,
+     "ref": "13.4",
+     "pages": "1010–1134"
     }
    ],
    "downloads": [
@@ -38010,6 +40720,36 @@
      "title": "Batch 04 · Full Bank · pages 303–435",
      "file": "downloads/M13e-Batch-4-Full-Bank-pages-303-435.pdf",
      "pages": 35
+    },
+    {
+     "id": "M2.V5.DL1",
+     "title": "Batch 05 · Full Bank · pages 438–537",
+     "file": "downloads/M13e-Batch-5-Full-Bank-pages-438-537.pdf",
+     "pages": 35
+    },
+    {
+     "id": "M2.V6.DL1",
+     "title": "Batch 06 · Full Bank · pages 538–648",
+     "file": "downloads/M13e-Batch-6-Full-Bank-pages-538-648.pdf",
+     "pages": 31
+    },
+    {
+     "id": "M2.V7.DL1",
+     "title": "Batch 07 · Full Bank · pages 649–759",
+     "file": "downloads/M13e-Batch-7-Full-Bank-pages-649-759.pdf",
+     "pages": 33
+    },
+    {
+     "id": "M2.V9.DL1",
+     "title": "Batch 09 · Full Bank · pages 884–1009",
+     "file": "downloads/M13e-Batch-9-Full-Bank-pages-884-1009.pdf",
+     "pages": 34
+    },
+    {
+     "id": "M2.V10.DL1",
+     "title": "Batch 10 · Full Bank · pages 1010–1134",
+     "file": "downloads/M13e-Batch-10-Full-Bank-pages-1010-1134.pdf",
+     "pages": 38
     }
    ],
    "batches": 16
