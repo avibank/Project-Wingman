@@ -175,6 +175,16 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
+**13e BATCH 8 WENT IN ON 2026-11-19, once its other four files arrived.** `M2.V8`
+pages **760–883**: quiz 40 (14/13/13), **17** open-ended cards, paper **30pp**
+from a 153-question bank. The exam had come twice (a `_1` copy), byte-identical
+to the first, so nothing was in question. **All ten of the first ten batches are
+in and the ranges tile except 436–437**, which belong to no batch. It slotted
+between 7 and 9 by batch order, so **batches 9 and 10's card-set address moved
+up by one** (`/library/cards/9` is now batch 9 and `/10` batch 10) — exactly the
+shift the previous entry warned about; ids, scores and saves are untouched.
+Batches 11-16 are still to come.
+
 **13e BATCHES 5, 6, 7, 9 AND 10 WENT IN ON 2026-11-19** (owner dropped the
 files with no words, so the existing importer's rule applied: import what is
 complete). `M2.V5` pages **438–537** (quiz 40, **19** cards, paper 35pp),
