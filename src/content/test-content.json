@@ -39612,6 +39612,548 @@
      "pages": "649–759"
     },
     {
+     "id": "M2.V8",
+     "name": "Navigation",
+     "cardsName": "Batch 08 · Study Cards · pages 760–883",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V8.QZ",
+      "name": "Batch 08 · Mock Exam · pages 760–883",
+      "questions": [
+       {
+        "id": "M2.V8.Q1",
+        "question": "What do two TCAS computers do in a conflict?",
+        "options": [
+         "Calculate and coordinate an escape path",
+         "Both command a climb at the same time",
+         "Both switch themselves to standby"
+        ],
+        "correct": 0,
+        "explain": "Both TCAS compute an escape path and coordinate it over a Mode S link."
+       },
+       {
+        "id": "M2.V8.Q2",
+        "question": "What is processed during the right-to-left scans in windshear operation?",
+        "options": [
+         "Terrain",
+         "Weather",
+         "Windshear"
+        ],
+        "correct": 1,
+        "explain": "Weather processing works during right-to-left (CCW) scans."
+       },
+       {
+        "id": "M2.V8.Q3",
+        "question": "What else can the weather radar show besides weather?",
+        "options": [
+         "Airports and runway lights",
+         "Other aircraft and their altitude",
+         "Land contours, turbulence and windshear"
+        ],
+        "correct": 2,
+        "explain": "Additional functions show land contours, turbulence and windshear."
+       },
+       {
+        "id": "M2.V8.Q4",
+        "question": "What may a corrective RA ask when the aircraft is climbing?",
+        "options": [
+         "To keep climbing at exactly the same rate",
+         "To change the climb rate or reverse to descent",
+         "To level off at once and turn to the left"
+        ],
+        "correct": 1,
+        "explain": "In a climb: reduce or increase climb rate, or reverse to descent."
+       },
+       {
+        "id": "M2.V8.Q5",
+        "question": "What does TCAS need from ground stations to work?",
+        "options": [
+         "Data from the ATC radar",
+         "Signals from radio beacons",
+         "Nothing, it works on its own"
+        ],
+        "correct": 2,
+        "explain": "TCAS is airborne and works independently of ground systems."
+       },
+       {
+        "id": "M2.V8.Q6",
+        "question": "How many colours are used to show precipitation and turbulence?",
+        "options": [
+         "Five",
+         "Two",
+         "Three"
+        ],
+        "correct": 0,
+        "explain": "Five colour displays are used."
+       },
+       {
+        "id": "M2.V8.Q7",
+        "question": "Where does the weather radar show its results?",
+        "options": [
+         "On the navigation display",
+         "On the MCDU",
+         "On the primary flight display"
+        ],
+        "correct": 0,
+        "explain": "The WXR shows its results on the ND."
+       },
+       {
+        "id": "M2.V8.Q8",
+        "question": "Where is the weather radar antenna located?",
+        "options": [
+         "Under the fuselage",
+         "On the vertical stabilizer",
+         "In the nose radome"
+        ],
+        "correct": 2,
+        "explain": "The antenna and pedestal are in the nose radome."
+       },
+       {
+        "id": "M2.V8.Q9",
+        "question": "What happens to red symbols on the ND in TA mode?",
+        "options": [
+         "They turn green",
+         "They flash",
+         "They are hidden"
+        ],
+        "correct": 2,
+        "explain": "In TA mode, the red symbols are hidden on the ND."
+       },
+       {
+        "id": "M2.V8.Q10",
+        "question": "What is windshear?",
+        "options": [
+         "A sudden change of wind speed or direction over a short distance",
+         "A strong wind found only at high altitude in clear air",
+         "A steady wind from one direction over a long distance"
+        ],
+        "correct": 0,
+        "explain": "Windshear is an abrupt change of wind speed or direction over a small distance."
+       },
+       {
+        "id": "M2.V8.Q11",
+        "question": "How many protected areas does TCAS form around its own aircraft?",
+        "options": [
+         "Two: resolution advisory and traffic alert",
+         "Three: other, proximate and threat traffic",
+         "One: traffic alert, around the whole aircraft"
+        ],
+        "correct": 0,
+        "explain": "TCAS forms 2 protected areas: RA and TA."
+       },
+       {
+        "id": "M2.V8.Q12",
+        "question": "What is the minimum range at which TCAS detects aircraft?",
+        "options": [
+         "2 NM",
+         "14 NM",
+         "50 NM"
+        ],
+        "correct": 1,
+        "explain": "Aircraft are detected from a minimum range of 14 NM."
+       },
+       {
+        "id": "M2.V8.Q13",
+        "question": "How can the pilot change the antenna elevation?",
+        "options": [
+         "With the tilt knob",
+         "With the gain knob",
+         "With the range selector"
+        ],
+        "correct": 0,
+        "explain": "The tilt knob can manually influence the elevation."
+       },
+       {
+        "id": "M2.V8.Q14",
+        "question": "Why is windshear so dangerous?",
+        "options": [
+         "The temperature suddenly drops below zero",
+         "Heavy rain suddenly changes to large hail",
+         "A strong headwind suddenly changes to a tailwind"
+        ],
+        "correct": 2,
+        "explain": "The aircraft first gets a strong headwind that changes quickly to a tailwind."
+       },
+       {
+        "id": "M2.V8.Q15",
+        "question": "What does MONITOR VERTICAL SPEED tell the crew?",
+        "options": [
+         "Climb at 1500 ft/min until the traffic passes",
+         "Keep the recommended vertical speed in the green",
+         "Reduce the airspeed at once to the green arc"
+        ],
+        "correct": 1,
+        "explain": "It tells the crew to keep the recommended vertical speed shown in green."
+       },
+       {
+        "id": "M2.V8.Q16",
+        "question": "What is the purpose of the whisper-shout sequence?",
+        "options": [
+         "To reduce how many aircraft reply at once",
+         "To save electrical power in the TCAS",
+         "To increase the range of the TCAS"
+        ],
+        "correct": 0,
+        "explain": "Whisper-shout reduces the number replying to any one interrogation."
+       },
+       {
+        "id": "M2.V8.Q17",
+        "question": "What is the elapsed time between transmission and echo proportional to?",
+        "options": [
+         "The size of the target",
+         "The range to the target",
+         "The speed of the target"
+        ],
+        "correct": 1,
+        "explain": "The elapsed time is directly proportional to range."
+       },
+       {
+        "id": "M2.V8.Q18",
+        "question": "What does a resolution advisory (RA) give the crew?",
+        "options": [
+         "Visual and aural commands for safe vertical separation",
+         "A map of the nearby traffic with no commands at all",
+         "A warning to turn left or right away from the traffic"
+        ],
+        "correct": 0,
+        "explain": "The RA gives visual and aural commands for safe vertical separation."
+       },
+       {
+        "id": "M2.V8.Q19",
+        "question": "How far does the azimuth motor move the weather radar antenna?",
+        "options": [
+         "Plus and minus 30°",
+         "Plus and minus 90°",
+         "Plus and minus 180°"
+        ],
+        "correct": 1,
+        "explain": "The azimuth motor moves the antenna ±90°."
+       },
+       {
+        "id": "M2.V8.Q20",
+        "question": "How is other traffic shown on the ND?",
+        "options": [
+         "A solid white diamond",
+         "A hollow white diamond",
+         "A solid red square"
+        ],
+        "correct": 1,
+        "explain": "Other traffic is a hollow diamond, in white."
+       },
+       {
+        "id": "M2.V8.Q21",
+        "question": "What windshear symbol is added to the ND?",
+        "options": [
+         "A flashing amber circle",
+         "A red square with a plus sign",
+         "An icon with red and black bars"
+        ],
+        "correct": 2,
+        "explain": "A windshear icon with red and black bars is added to the ND."
+       },
+       {
+        "id": "M2.V8.Q22",
+        "question": "Why can TCAS give no RA against a Mode A-only aircraft?",
+        "options": [
+         "Mode A does not reply to TCAS",
+         "Mode A uses a different frequency",
+         "Mode A does not report altitude"
+        ],
+        "correct": 2,
+        "explain": "Mode A transponders do not send altitude."
+       },
+       {
+        "id": "M2.V8.Q23",
+        "question": "Why can clear air turbulence not be detected?",
+        "options": [
+         "It is always too far ahead of the aircraft",
+         "It has no detectable related phenomena",
+         "It moves too fast for the radar beam"
+        ],
+        "correct": 1,
+        "explain": "CAT has no detectable associated phenomena."
+       },
+       {
+        "id": "M2.V8.Q24",
+        "question": "How many categories are target aircraft divided into?",
+        "options": [
+         "Two",
+         "Three",
+         "Four"
+        ],
+        "correct": 2,
+        "explain": "Targets are in four categories."
+       },
+       {
+        "id": "M2.V8.Q25",
+        "question": "What does TCAS use for certain identification of intruders?",
+        "options": [
+         "The Mode A code",
+         "The Mode S 24-bit address",
+         "The radio altitude"
+        ],
+        "correct": 1,
+        "explain": "TCAS uses the definite 24-bit Mode S address."
+       },
+       {
+        "id": "M2.V8.Q26",
+        "question": "What does the red range on the vertical speed scale mean?",
+        "options": [
+         "A high risk of traffic conflict",
+         "The maximum climb rate",
+         "The safe vertical speed"
+        ],
+        "correct": 0,
+        "explain": "In the red range there is a high risk of conflict."
+       },
+       {
+        "id": "M2.V8.Q27",
+        "question": "Which windshear is most dangerous to aircraft?",
+        "options": [
+         "Over the sea in light rain",
+         "Near the ground, such as a microburst",
+         "At high altitude in clear air"
+        ],
+        "correct": 1,
+        "explain": "Windshear near the ground (downburst, microburst, macroburst) is the greatest danger."
+       },
+       {
+        "id": "M2.V8.Q28",
+        "question": "What does a corrective advisory tell the pilot?",
+        "options": [
+         "To watch the display for traffic",
+         "To avoid certain manoeuvres only",
+         "To change the current vertical rate"
+        ],
+        "correct": 2,
+        "explain": "Corrective advisories instruct the pilot to deviate from the current vertical rate."
+       },
+       {
+        "id": "M2.V8.Q29",
+        "question": "Where is turbulence likely in a cloud?",
+        "options": [
+         "Around a steep rainfall gradient",
+         "In the middle of light, even rain",
+         "Above the top of the cloud"
+        ],
+        "correct": 0,
+        "explain": "A steep rainfall gradient shows vertical wind shear, likely highly turbulent."
+       },
+       {
+        "id": "M2.V8.Q30",
+        "question": "What can macrobursts and microbursts cause?",
+        "options": [
+         "Only heavy rain with no wind",
+         "Only light turbulence at altitude",
+         "Extensive damage at ground level"
+        ],
+        "correct": 2,
+        "explain": "Both can cause extensive damage at ground level."
+       },
+       {
+        "id": "M2.V8.Q31",
+        "question": "What does a traffic advisory (TA) show?",
+        "options": [
+         "A vertical speed to fly to avoid the intruder",
+         "Range, bearing and relative altitude of the intruder",
+         "The intruder's flight number and route"
+        ],
+        "correct": 1,
+        "explain": "The TA shows range, bearing and relative altitude."
+       },
+       {
+        "id": "M2.V8.Q32",
+        "question": "What does the TRAFFIC, TRAFFIC alert tell the crew?",
+        "options": [
+         "To watch the display for the intruder",
+         "To descend at once below the intruder",
+         "To climb at once away from the intruder"
+        ],
+        "correct": 0,
+        "explain": "It tells the crew to monitor the display for traffic."
+       },
+       {
+        "id": "M2.V8.Q33",
+        "question": "Which TCAS operating modes can be selected?",
+        "options": [
+         "STBY, TA and TA/RA",
+         "WX, TURB and MAP",
+         "THRT, ALL, ABV and BLW"
+        ],
+        "correct": 0,
+        "explain": "STBY, TA and TA/RA select the TCAS mode."
+       },
+       {
+        "id": "M2.V8.Q34",
+        "question": "Why do weather radars detect water instead of turbulence?",
+        "options": [
+         "Water is easier to see by eye",
+         "Turbulence cannot be detected directly",
+         "Turbulence is never dangerous"
+        ],
+        "correct": 1,
+        "explain": "Because turbulence cannot be detected directly, systems detect water droplets."
+       },
+       {
+        "id": "M2.V8.Q35",
+        "question": "What do the yellow bars on the windshear icon show?",
+        "options": [
+         "The heading the pilot should avoid",
+         "The distance to the runway",
+         "The safe vertical speed"
+        ],
+        "correct": 0,
+        "explain": "Yellow bars to the compass rose show the heading to avoid."
+       },
+       {
+        "id": "M2.V8.Q36",
+        "question": "What is TCAS designed to do?",
+        "options": [
+         "Detect rain ahead of the aircraft",
+         "Guide the aircraft to the runway",
+         "Protect the airspace around its own aircraft"
+        ],
+        "correct": 2,
+        "explain": "TCAS is designed to protect the airspace around its own aircraft."
+       },
+       {
+        "id": "M2.V8.Q37",
+        "question": "What is one radar mile?",
+        "options": [
+         "About 123.6 µs for 1 NM out and back",
+         "About 12.36 µs for 1 NM out and back",
+         "About 1.236 µs for 1 NM out and back"
+        ],
+        "correct": 1,
+        "explain": "One radar mile is the time to travel 1 NM and back: 12.36 µs."
+       },
+       {
+        "id": "M2.V8.Q38",
+        "question": "What do different colours on the weather radar display show?",
+        "options": [
+         "Different signal intensities",
+         "Different heights",
+         "Different distances"
+        ],
+        "correct": 0,
+        "explain": "Different signal intensity gives different colours."
+       },
+       {
+        "id": "M2.V8.Q39",
+        "question": "What are aircraft tracked by TCAS called?",
+        "options": [
+         "Intruders only",
+         "Contacts",
+         "Targets"
+        ],
+        "correct": 2,
+        "explain": "Aircraft tracked by TCAS are called targets."
+       },
+       {
+        "id": "M2.V8.Q40",
+        "question": "What are water droplets and electrical activity linked to?",
+        "options": [
+         "Clear air turbulence at high altitude",
+         "Mountain waves near the ground",
+         "Convective turbulence in cumulonimbus clouds"
+        ],
+        "correct": 2,
+        "explain": "Both are associated with convective turbulence in CB clouds."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V8.C001",
+       "front": "What does TCAS do, and how does it advise the crew?",
+       "back": "It protects the airspace around its own aircraft. It gives a **TA** (TRAFFIC, TRAFFIC) for nearby traffic and an **RA** with **vertical** commands for a threat."
+      },
+      {
+       "id": "M2.V8.C002",
+       "front": "How do corrective and preventive RAs differ?",
+       "back": "**Corrective**: change the current **vertical rate**. **Preventive**: **avoid** certain manoeuvres."
+      },
+      {
+       "id": "M2.V8.C003",
+       "front": "How does TCAS work without ground stations?",
+       "back": "It is **airborne**: it **interrogates** nearby **transponders** and uses their replies to find range, bearing and altitude, then the time to the **CPA** (TAU)."
+      },
+      {
+       "id": "M2.V8.C004",
+       "front": "Why do two TCAS aircraft need to talk to each other?",
+       "back": "So they do not both make the **same** manoeuvre. They **coordinate** over a **Mode S** link using each aircraft's **24-bit address**."
+      },
+      {
+       "id": "M2.V8.C005",
+       "front": "What do the TCAS mode and display switches select?",
+       "back": "**STBY / TA / TA-RA** selects the mode. **THRT / ALL / ABV / BLW** selects which traffic is shown."
+      },
+      {
+       "id": "M2.V8.C006",
+       "front": "How does TCAS find and track other aircraft?",
+       "back": "It listens for **Mode S squitter** and uses **whisper-shout** interrogations (increasing strength) for Mode C aircraft, so fewer aircraft reply at once."
+      },
+      {
+       "id": "M2.V8.C007",
+       "front": "How do the four TCAS target types look on the ND?",
+       "back": "**Other**: white **hollow** diamond. **Proximate**: white **solid** diamond. **TA**: **amber circle**. **RA**: **red square**."
+      },
+      {
+       "id": "M2.V8.C008",
+       "front": "What do the TCAS voice alerts ask the crew to do?",
+       "back": "**TRAFFIC, TRAFFIC**: watch the display. **MONITOR VERTICAL SPEED**: keep the **green** range (preventive). **CLIMB/DESCEND**: manoeuvre (corrective)."
+      },
+      {
+       "id": "M2.V8.C009",
+       "front": "How is an RA shown on the PFD?",
+       "back": "The vertical speed scale shows **green** fly-to and **red** forbidden sectors; the pilot keeps the needle **out of the red**."
+      },
+      {
+       "id": "M2.V8.C010",
+       "front": "How does weather radar show the weather?",
+       "back": "It sends pulses ahead; **water droplets** reflect them; the **echo time** gives range and the **strength** gives **colour** on the ND."
+      },
+      {
+       "id": "M2.V8.C011",
+       "front": "Why does weather radar look for water and not turbulence?",
+       "back": "Turbulence **cannot be detected directly**. Water droplets mark **convective turbulence** in CB clouds; **clear air turbulence** cannot be seen."
+      },
+      {
+       "id": "M2.V8.C012",
+       "front": "What does contouring show?",
+       "back": "Heavy rain cells as **dark holes** in the paint. A **narrow** paint means a **steep** rainfall gradient and likely **turbulence**."
+      },
+      {
+       "id": "M2.V8.C013",
+       "front": "How is the weather radar antenna moved and kept steady?",
+       "back": "In the **nose radome**: the **azimuth** motor sweeps **±90°**; the **elevation** motor keeps it **level** whatever the attitude; the pilot sets **tilt**."
+      },
+      {
+       "id": "M2.V8.C014",
+       "front": "How does multiscan find weather at all ranges?",
+       "back": "It uses **+5°** (long range), **0°** (moderate) and **-15°** (near) tilts and compares them to remove **ground clutter**."
+      },
+      {
+       "id": "M2.V8.C015",
+       "front": "Why is windshear dangerous, and how is it shown?",
+       "back": "A strong **headwind** suddenly becomes a **tailwind**, so lift is lost. PWS shows a **red and black icon** with **yellow** bars marking the heading to avoid."
+      },
+      {
+       "id": "M2.V8.C016",
+       "front": "What happens to an aircraft flying through a microburst?",
+       "back": "First strong **headwinds**, then a **downflow** at the centre, then a **tailwind**. Airspeed changes fast, so **early warning** is vital."
+      },
+      {
+       "id": "M2.V8.C017",
+       "front": "What are the three windshear alert levels?",
+       "back": "**Level 1 advisory** (least severe), **level 2 caution**, **level 3 warning** (most severe). No alerts **below 50 ft**."
+      }
+     ],
+     "batch": 8,
+     "ref": "13.4",
+     "pages": "760–883"
+    },
+    {
      "id": "M2.V9",
      "name": "Navigation",
      "cardsName": "Batch 09 · Study Cards · pages 884–1009",
@@ -40738,6 +41280,12 @@
      "title": "Batch 07 · Full Bank · pages 649–759",
      "file": "downloads/M13e-Batch-7-Full-Bank-pages-649-759.pdf",
      "pages": 33
+    },
+    {
+     "id": "M2.V8.DL1",
+     "title": "Batch 08 · Full Bank · pages 760–883",
+     "file": "downloads/M13e-Batch-8-Full-Bank-pages-760-883.pdf",
+     "pages": 30
     },
     {
      "id": "M2.V9.DL1",
