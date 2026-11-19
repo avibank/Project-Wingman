@@ -175,6 +175,27 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
+**13e BATCHES 5, 6, 7, 9 AND 10 WENT IN ON 2026-11-19** (owner dropped the
+files with no words, so the existing importer's rule applied: import what is
+complete). `M2.V5` pages **438–537** (quiz 40, **19** cards, paper 35pp),
+`M2.V6` **538–648** (40, **16**, 31pp), `M2.V7` **649–759** (40, **16**, 33pp),
+`M2.V9` **884–1009** (40, **17**, 34pp) and `M2.V10` **1010–1134** (40, **17**,
+38pp). All five are named "Navigation" (ref 13.4, the documents' own title),
+every exam stem found in its bank, 534 ids across the module and all unique.
+- **BATCH 8 IS NOT IN, AND THE IMPORTER REFUSED IT**: only its Exam arrived —
+  no Study Cards, no Full Bank. An exam-only chapter would have fallen back to
+  the quiz's own questions as MULTIPLE-CHOICE cards and no paper, which is the
+  thing open-ended cards were built to stop. It goes in when its other four
+  files do, under `M2.V8`.
+- **Two gaps worth knowing**: pages 436–437 belong to no batch (batch 4 ends
+  435, batch 5 starts 438 — the documents' own ranges), and **batch 8 arriving
+  later shifts the card-set address of 9 and 10**: the card route is the
+  chapter's POSITION, so `/library/cards/8` is batch 9 until batch 8 lands and
+  then becomes batch 8. Ids are safe; the URL is not.
+- The Library's "Next to land" row names the **first missing batch** now (8),
+  not the one after the highest (it said 11).
+- Purely ADDITIVE, no reset, `STORAGE_EPOCH` untouched.
+
 **13e BATCHES 3 AND 4 WENT IN ON 2026-11-18** (owner: "push those as batch 3
 and 4"). `M2.V3` pages **201–302** — quiz 40 (14/13/13), **20** open-ended
 cards, paper **41pp** from a 198-question bank — and `M2.V4` pages **303–435**

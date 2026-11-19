@@ -130,8 +130,9 @@ export default function LibraryBatches({
   }, [openRow, reduced]);
 
   /* How many batches the module will have, and which is next to land. */
-  const last = open.length ? Math.max(...open.map((b) => b.n)) : 0;
-  const next = total && last < total ? last + 1 : null;
+  /* THE FIRST BATCH STILL TO LAND, not the one after the highest: with 1-7, 9 and
+     10 in, the one coming is 8. */
+  const next = total ? (Array.from({ length: total }, (_, i) => i + 1).find((n) => !open.some((b) => b.n === n)) ?? null) : null;
 
   const go = (n) => {
     choose(n);
