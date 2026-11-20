@@ -23,7 +23,7 @@
 // arguments and returns the next state, so the dwell, the band punch-through
 // and the adjacency pass are all checkable without a clock or a browser.
 
-import { VOICES, DEFAULT_CHARACTER, HAS_POOLS } from "./voices.js";
+import { VOICES, DEFAULT_CHARACTER, HAS_POOLS, offeredVoice } from "./voices.js";
 
 export const DWELL_MS = 2 * 60 * 1000;
 export const ARRIVAL_AWAY_MS = 8 * 60 * 60 * 1000;
@@ -114,7 +114,11 @@ const EMPTY = { band: null, character: null, bag: [], prevLast: null, lastTag: n
 export function pickGreeting(state, ctx) {
   const s = { ...EMPTY, ...(state || {}) };
   const { now = Date.now(), hour = 12, name = null, awayMs = null } = ctx || {};
-  const character = VOICES[ctx?.character] ? ctx.character : DEFAULT_CHARACTER;
+  /* THROUGH `offeredVoice`, NOT JUST "is it in VOICES". A withdrawn voice is
+     still IN `VOICES` — that is the point of filtering rather than deleting —
+     so the old test would have let a stored "hermit" greet somebody who can
+     no longer choose him. */
+  const character = offeredVoice(VOICES[ctx?.character] ? ctx.character : DEFAULT_CHARACTER);
   const rand = ctx?.rand || Math.random;
 
   const band = bandFor(hour);

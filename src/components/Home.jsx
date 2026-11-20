@@ -20,7 +20,7 @@ import { profileSVG, phaseName } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { moduleAverage } from "../lib/attitude.js";
 import { useAttitude } from "../lib/useAttitude.js";
-import { DEFAULT_CHARACTER } from "../lib/voices.js";
+import { DEFAULT_CHARACTER, offeredVoice } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import PaperStrip from "./PaperStrip.jsx";
@@ -389,7 +389,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // than given a fallback word — the spec is explicit about that.
   const greetName = progress.get("pw-greet-name", null) || null;
   const character = flags["voice.characters"]
-    ? progress.get("pw-voice", DEFAULT_CHARACTER)
+    ? offeredVoice(progress.get("pw-voice", DEFAULT_CHARACTER))
     : DEFAULT_CHARACTER;
 
   useEffect(() => {
