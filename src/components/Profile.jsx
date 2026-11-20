@@ -16,7 +16,7 @@ import { useUserProgress } from "../lib/userProgress.jsx";
 import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col } from "../lib/liveryEngine.js";
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
-import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
+import { CHARACTERS, OFFERED_CHARACTERS, DEFAULT_CHARACTER, VOICES, offeredVoice } from "../lib/voices.js";
 import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
@@ -685,7 +685,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
      without it the card flickers through read-only on every load. */
   const signedIn = Boolean(isLoaded && user?.id);
 
-  const character = progress.get("pw-voice", DEFAULT_CHARACTER);
+  const character = offeredVoice(progress.get("pw-voice", DEFAULT_CHARACTER));
   const callCopy = CALL_COPY[character] || CALL_COPY.wingman;
 
   const preset = demoOn() ? DEMO_PRESET : progress.get("pw-social-preset", "crew");
@@ -1055,17 +1055,26 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 floor. Appearance's identical-looking control is a different
                 component and stays at 44; docs/launch/DECISIONS.md says how to
                 reverse this in one line. */}
-            <div className="sega" role="group" aria-label="Who greets you">
-                {CHARACTERS.map((c) => (
-                  <button key={c.id} type="button" className="is-inline"
-                          aria-pressed={character === c.id}
-                          onClick={() => withSetting(() => progress.set("pw-voice", c.id))}>
-                    {c.name}
-                  </button>
-                ))}
-              </div>
+            {/* ONE VOICE IS NOT A CHOICE, so the strip goes rather than
+                  standing there with a single pressed button nobody can move.
+                  The rule is the COUNT, not a name: the Hermit's withdrawal
+                  (2026-11-20) leaves one, and offering him again brings this
+                  strip back with no edit here. The box, its title and the
+                  greeting-name field below stay either way — "Who greets you"
+                  is still answered, by the blurb. */}
+              {OFFERED_CHARACTERS.length > 1 && (
+                <div className="sega" role="group" aria-label="Who greets you">
+                  {OFFERED_CHARACTERS.map((c) => (
+                    <button key={c.id} type="button" className="is-inline"
+                            aria-pressed={character === c.id}
+                            onClick={() => withSetting(() => progress.set("pw-voice", c.id))}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
               <p className="pd" style={{ marginTop: 12 }}>
-                {CHARACTERS.find((c) => c.id === character)?.blurb}
+                {OFFERED_CHARACTERS.find((c) => c.id === character)?.blurb}
               </p>
               {/* Empty by default, with the line inside the field rather than
                   under it: an empty box that explains itself, and nothing to

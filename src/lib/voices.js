@@ -177,5 +177,22 @@ export const CHARACTERS = [
 ];
 
 export const DEFAULT_CHARACTER = "wingman";
+
+/* THE HERMIT IS WITHDRAWN (owner, 2026-11-20: "remove the hermit"), and this
+   is a FILTER rather than a deletion — the same treatment Aurora gets in
+   finishEngine.js, for the reason the same message proves: it asked for
+   Aurora BACK, three withdrawals later. All 54 Hermit lines stay in `VOICES`,
+   `greeting.js` keeps drawing from them, `CALL_COPY` keeps his label, and
+   offering him again is the one line below. Deleting 54 transcribed lines to
+   tidy up is what would make the next reinstatement a rewrite.
+
+   `offeredVoice` is the other half, and it is the half that makes withdrawing
+   a voice safe at all: an account already stored on the Hermit reads back as
+   Wingman rather than being greeted by nobody. Every surface that resolves a
+   voice goes through it — the Flight Deck, the greeting itself and the
+   Preferences panel — so a stored "hermit" cannot reach a screen. */
+export const OFFERED_CHARACTERS = CHARACTERS.filter((c) => c.id !== "hermit");
+export const offeredVoice = (id) =>
+  (OFFERED_CHARACTERS.some((c) => c.id === id) ? id : DEFAULT_CHARACTER);
 // Arrival vs continuation is a Wingman-only split, for now.
 export const HAS_POOLS = { wingman: true, hermit: false };

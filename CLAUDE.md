@@ -2377,18 +2377,55 @@ reached the table saying only that somebody somewhere was unhappy with
 - **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the
   Library, the subtitle, Bookmarks or the paper address. The demo says a
   reader for module-wide shared PDFs is coming.
-- **Aurora is OUT again** (owner, 2026-10-04: "remove aurora"). Out on
-  2026-09-21, back on 2026-09-29, out again now — three moves of one line, so
-  it is written to move cleanly. **It is a filter, never a deletion**: Aurora
-  stays in `FINISHES`, every renderer keeps drawing it, and `check:contrast`,
-  `check:surfaces` and `test:bm` keep measuring it, so nothing rots while it
-  is out and putting it back is that line again. Deleting the renderers to
-  tidy up is what would make the next reinstatement a rewrite. `offeredFinish`
-  is the other half: an account stored on Aurora reads back as Standard rather
-  than painting nothing. The `livery.aurora` FLAG is a different thing and
-  stays off — it gates the retired aurora LIVERY (`RETIRED_TO_FINISH`).
-- **THERE ARE TWO FINISHES: Standard and Manual** (owner, 2026-10-05: "kill
-  tye dye, just have manual and standard"). Two pattern finishes were built
+- **Aurora is BACK** (owner, 2026-11-20: "add back aurora"). Out 2026-09-21,
+  back 2026-09-29, out 2026-10-04, back today — **four moves of one line**,
+  which is the whole argument for the way it was written. `OFFERED_FINISHES`
+  is `FINISHES` again and nothing else changed to do it: every renderer kept
+  drawing it, `auroraVars` never left, and `check:contrast`, `check:surfaces`,
+  `check:tokens` and `check:lesson-contrast` measured it for the seven weeks
+  it was unoffered, so there was nothing to un-rot.
+  - **Two rules come back with it, both unreachable while it was out**:
+    App.jsx forces the night variant on `finish === "aurora"` and
+    `lightOverride` says the same, so Aurora is a night sky and Day is not
+    honoured on it. `test:bm` needed no edit — it runs the ask through the
+    app's own filter rather than restating the rule, so the twelve states
+    that wore Standard while Aurora was out measure a night sky again.
+  - **`offeredFinish` is still the other half**, and it is what makes
+    withdrawing a finish safe at all: while one is out, an account stored on
+    it reads back as Standard rather than painting nothing.
+  - The `livery.aurora` FLAG is a different thing and stays off — it gates
+    the retired aurora LIVERY (`RETIRED_TO_FINISH`), not this finish.
+- **THE HERMIT IS WITHDRAWN, AND FILTERED RATHER THAN DELETED** (owner,
+  2026-11-20: "remove the hermit"). He was one of the two greeting voices
+  (`pw-voice`, the "Who greets you" box behind `voice.characters`, which is
+  `everyone: true`), so this was live for every student. **All 54 of his lines
+  stay in `VOICES`**, `greeting.js` still draws from them and `CALL_COPY`
+  keeps his label: `OFFERED_CHARACTERS` in `voices.js` is the one line, and
+  offering him again is that line.
+  - **The same message asked for Aurora back**, three withdrawals later, which
+    is the argument for filtering rather than deleting written out by the
+    request itself. The Tribal/Tie-dye rule still stands for the other case —
+    delete a thing nobody ever chose — and the Hermit is not that: he has
+    shipped to everyone since build 01, out of a transcribed reference set
+    (`docs/reference/wingman-voices.md`).
+  - **`offeredVoice` is the other half**, and every surface that resolves a
+    voice goes through it — the Flight Deck's greeting, `greeting.js` itself
+    and the Preferences panel — so an account already stored on the Hermit
+    reads back as Wingman rather than being greeted by nobody. `greeting.js`
+    needed it specifically: its old test was "is this id in `VOICES`", and a
+    withdrawn voice is still IN `VOICES`, which is the point of filtering.
+  - **ONE VOICE IS NOT A CHOICE, so the segmented strip does not render** —
+    a single pressed button nobody can move is not a control. The rule is the
+    COUNT (`OFFERED_CHARACTERS.length > 1`) rather than a name, so reinstating
+    him brings the strip back with no edit in Profile.jsx. The box, its title
+    and the greeting-name field stay: "Who greets you" is still answered, by
+    the blurb.
+- **THERE ARE THREE FINISHES AGAIN: Standard, Aurora and Manual.** This line
+  read "TWO: Standard and Manual" from 2026-10-05 ("kill tye dye, just have
+  manual and standard") until Aurora came back on 2026-11-20 — the sentence
+  was about killing the PATTERN finishes and it went stale the moment the
+  filter above moved, which is the hazard of counting things in prose beside
+  a list that can change. Two pattern finishes were built
   and killed in two days — **Tribal** (a four-blade rotor tile, 2026-10-04)
   and **Tie-dye** (a jet-turbine fan disc over a dyed spiral, the next day) —
   and both are **DELETED rather than filtered**, along with

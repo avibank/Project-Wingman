@@ -99,7 +99,21 @@ export const FINISHES = [
    on a screen that was obeying its own rule. It holds the other half instead,
    that a withdrawn finish is worn as Standard. Offering it again is the one
    line above, and both halves come back with it. */
-export const OFFERED_FINISHES = FINISHES.filter((f) => f.id !== "aurora");
+/* AURORA IS OFFERED AGAIN (owner, 2026-11-20: "add back aurora") — the fourth
+   move of this one line, and the whole reason it was written as a filter. Out
+   2026-09-21, back 2026-09-29, out 2026-10-04, back today. Nothing else
+   changed to do it: every renderer kept drawing it, `auroraVars` never left,
+   and check:contrast / check:surfaces / check:tokens / check:lesson-contrast
+   have been measuring it the entire time it was unoffered.
+
+   WHAT COMES BACK WITH IT, both of which were unreachable while it was out:
+   App.jsx forces the night variant on `finish === "aurora"`, and
+   `lightOverride` says the same — so Aurora is a night sky again and Day is
+   not honoured on it. `test:bm`'s own note already covers this: it runs the
+   ask through the app's filter rather than restating the rule, so the twelve
+   states that wore Standard while Aurora was out now measure a night sky with
+   no edit to the walk. */
+export const OFFERED_FINISHES = FINISHES;
 export const offeredFinish = (id) => (OFFERED_FINISHES.some((f) => f.id === (id ?? null)) ? (id ?? null) : null);
 
 /**
