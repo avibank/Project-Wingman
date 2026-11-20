@@ -2378,12 +2378,35 @@ reached the table saying only that somebody somewhere was unhappy with
   Library, the subtitle, Bookmarks or the paper address. The demo says a
   reader for module-wide shared PDFs is coming.
 - **Aurora is BACK** (owner, 2026-11-20: "add back aurora"). Out 2026-09-21,
-  back 2026-09-29, out 2026-10-04, back today — **four moves of one line**,
-  which is the whole argument for the way it was written. `OFFERED_FINISHES`
-  is `FINISHES` again and nothing else changed to do it: every renderer kept
-  drawing it, `auroraVars` never left, and `check:contrast`, `check:surfaces`,
-  `check:tokens` and `check:lesson-contrast` measured it for the seven weeks
-  it was unoffered, so there was nothing to un-rot.
+  back 2026-09-29, out 2026-10-04, back today.
+  - **IT IS TWO LINES, NOT ONE, AND SHIPPING ONE OF THEM LOOKS LIKE SUCCESS.**
+    The filter — `OFFERED_FINISHES = FINISHES` — only puts Aurora in the
+    picker. `finishVars` answers `resolve ? resolve(liveryId, variant) : {}`
+    for this finish, so the SPEC TABLE has to be passed in as its fifth
+    argument from App, and App was calling it with four. Shipped that way,
+    Aurora was selectable and `data-aur="1"` and the Deck's aurora layers
+    switched on — **with no `--key-img` curtains, no `--star-img` and
+    `--stars` never reaching 1**. A night sky with the texture and the stars
+    missing, which the owner saw within the hour: "aurora lacks the actual
+    texture of the aurora sky and the stars."
+  - **`finishEngine.js` says "one line" and `auroraFinish.js` says "the
+    filter PLUS passing this resolver from App".** Both were read; only the
+    first was acted on. Where two files describe one switch, believe the one
+    holding the thing being switched on.
+  - **And nothing could have caught it**: `check:contrast`,
+    `check:surfaces`, `check:tokens` and `check:lesson-contrast` all pass
+    `auroraVars` in THEMSELVES, so every one measured a correct Aurora while
+    the app rendered a bare one. `test:bm` passed too. The only way to see it
+    was to look at the screen.
+  - **The spec table is back in the ENTRY chunk**, reversing the 2026-10-06
+    bundle decision on purpose: that was taken because the table rode first
+    paint "for a finish that is not offered", and the objection died with the
+    offer. Entry **639KB to 647KB** against the 680 budget. Lazily was the
+    other option and is wrong here — a lazy resolver gives the first frame no
+    curtains and no stars and then snaps, worst for exactly the people who
+    chose Aurora.
+  - Every renderer did survive the seven weeks out, which is what filtering
+    rather than deleting bought; what did not survive was the WIRING.
   - **Two rules come back with it, both unreachable while it was out**:
     App.jsx forces the night variant on `finish === "aurora"` and
     `lightOverride` says the same, so Aurora is a night sky and Day is not

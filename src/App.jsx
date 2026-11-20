@@ -198,6 +198,19 @@ function warmOnIntent(e) {
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer, offeredFinish } from "./lib/finishEngine.js";
+/* AURORA'S SPEC TABLE IS BACK IN THE ENTRY, and that reverses a 2026-10-06
+   bundle decision on purpose. It was pulled out because six liveries of
+   curtain prose rode every first paint "for a finish that is not offered" —
+   and that objection died the moment Aurora was offered again (2026-11-20).
+   Measured rather than assumed: the entry had ~41KB of headroom under the
+   680KB budget and check:bundle holds it.
+
+   LAZILY WAS THE OTHER OPTION AND IS WRONG HERE. finishEngine's own comment
+   suggests it, but a lazy resolver means the first frame for somebody who has
+   Aurora STORED paints with no curtains and no stars and then snaps — worst
+   for exactly the people who chose it. The tokens have to exist on the first
+   render or the finish is wrong when it matters. */
+import { auroraVars } from "./lib/auroraFinish.js";
 import { fetchAllPresence, heartbeat } from "./lib/presence.js";
 import { listen, LIVE_TABLES } from "./lib/live.js";
 import { useDisplayName } from "./lib/identity.js";
@@ -1673,7 +1686,14 @@ function AppInner() {
     const { vars, C } = deckVars(shownLivery, variant);
     // The finish is layered over the stock, never mixed into it. With no
     // finish this is the stock exactly, which is what keeps None unchanged.
-    const over = finishVars(shownLivery, variant, finish, C.active);
+    /* THE FIFTH ARGUMENT IS NOT OPTIONAL FOR AURORA. `finishVars` answers
+       `resolve ? resolve(liveryId, variant) : {}` for this finish, so without
+       it Aurora returns NO tokens — no `--key-img` curtains, no `--star-img`,
+       `--stars` never reaching 1 — while `data-aur` and the Deck's aurora
+       layers switch on regardless. That combination is a night sky with the
+       texture and the stars missing, which is exactly how it shipped on
+       2026-11-20 when the offer filter was moved without this. */
+    const over = finishVars(shownLivery, variant, finish, C.active, auroraVars);
     const all = { ...vars, ...over };
     const root = document.documentElement;
     Object.entries(all).forEach(([k, v]) => root.style.setProperty(k, v));
