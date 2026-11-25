@@ -141,6 +141,7 @@ function ReviewRow({ item, mine, n, k }) {
               const isRight = j === item.correct, isPick = j === mine && !isRight;
               return (
                 <li key={j} className={`rc${isRight ? " is-right" : isPick ? " is-picked" : ""}`}>
+                  <span className="rc__r" aria-hidden="true" />
                   <span className="rc__l">{LABELS[j]}</span>
                   <span className="rc__t">{isPick ? <s>{o}</s> : o}</span>
                   <span className="rc__tag">{isRight ? "Correct" : isPick ? "Your pick" : ""}</span>
