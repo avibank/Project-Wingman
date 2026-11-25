@@ -104,6 +104,9 @@ const IconArrow = () => (
     <path d="M3 8h10M9 4l4 4-4 4" />
   </svg>
 );
+const IconPage = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true"><path d="M3 2.5h6.5a2.5 2.5 0 0 1 2.5 2.5v8.5H5.5A2.5 2.5 0 0 1 3 11z" /><path d="M3 11a2.5 2.5 0 0 1 2.5-2.5H12" /></svg>
+);
 const IconFlagSolid = () => (
   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 15V2h9l-2 3.25L12 8.5H4.5V15z" /></svg>
 );
@@ -128,7 +131,7 @@ const IconOn = () => (
    over, so rows that should have arrived at 1.1s were still at nothing three
    seconds later, and the list read as empty while it was working. Found by
    measuring: the rows the test was holding were detached from the document. */
-function ReviewRow({ item, mine, n, k }) {
+function ReviewRow({ item, mine, n, k, flagged = false, moduleCode = null, chapterNo = null }) {
   const right = mine === item.correct;
   return (
     <li className="result__row" style={{ "--i": k }}>
@@ -141,33 +144,31 @@ function ReviewRow({ item, mine, n, k }) {
               const isRight = j === item.correct, isPick = j === mine && !isRight;
               return (
                 <li key={j} className={`rc${isRight ? " is-right" : isPick ? " is-picked" : ""}`}>
-                  <span className="rc__r" aria-hidden="true" />
                   <span className="rc__l">{LABELS[j]}</span>
                   <span className="rc__t">{isPick ? <s>{o}</s> : o}</span>
-                  <span className="rc__tag">{isRight ? "Correct" : isPick ? "Your pick" : ""}</span>
+                  {isRight && <span className="rc__ok" role="img" aria-label="Correct answer"><IconRight /></span>}
+                  {isPick && <span className="sr-only">Your pick</span>}
                 </li>
               );
             })}
           </ul>
           {(item.explain || item.page != null) && (
-            <div className="result__note">
-              {item.explain && <p>{item.explain}</p>}
-              {item.page != null && <span className="result__page">Manual · p. {item.page}</span>}
-            </div>
+            <p className="result__note">
+              {item.explain}
+              {item.page != null && <span className="result__page"><IconPage />p. {item.page}</span>}
+            </p>
           )}
         </details>
-        {!right && (
-          <span className="ans">
-            {mine === null
-              ? <span className="ans--blank">—</span>
-              : <s className="ans--wrong"><span className="ans__l">{LABELS[mine]}</span> {item.options[mine]}</s>}
-            <span className="ans__arrow" aria-label="correct answer"><IconArrow /></span>
-            <span className="ans--right"><span className="ans__l">{LABELS[item.correct]}</span> {item.options[item.correct]}</span>
-          </span>
-        )}
       </span>
-      <span className={`result__mark ${right ? "is-right" : "is-wrong"}`} aria-label={right ? "Right" : "Missed"}>
-        {right ? <IconRight /> : <IconMissed />}
+      <span className="result__side">
+        {flagged && <span className="result__flag" title="You flagged this one"><IconFlagSolid /><span className="sr-only">Flagged for review</span></span>}
+        {item.id && moduleCode && (
+          <SaveButton kind="question" moduleId={moduleCode} refId={item.id} chapter={chapterNo}
+                      className="btn btn--ghost is-inline exam-save result__save" />
+        )}
+        <span className={`result__mark ${right ? "is-right" : "is-wrong"}`} aria-label={right ? "Right" : "Missed"}>
+          {right ? <IconRight /> : <IconMissed />}
+        </span>
       </span>
     </li>
   );
@@ -799,13 +800,13 @@ export default function Exam({
 
             {missed.length > 0 && (
               <ol className="result__list review">
-                {missed.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={k} />)}
+                {missed.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={k} flagged={attempt.flagged[i]} moduleCode={moduleCode} chapterNo={chapterNo} />)}
               </ol>
             )}
 
             {got.length > 0 && (
               <ol className="result__list review result__list--got">
-                {got.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={missed.length + k} />)}
+                {got.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={missed.length + k} flagged={attempt.flagged[i]} moduleCode={moduleCode} chapterNo={chapterNo} />)}
               </ol>
             )}
 
