@@ -373,10 +373,9 @@
 .exam-frame .result__opts > summary .chev { flex: none; margin-top: 6px; }
 .exam-frame .result__opts[open] > summary .chev { transform: rotate(225deg) translateY(-2px); }
 .exam-frame .result__choices { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
-/* THE GREEN IS THE OWNER'S (2026-11-25): a right answer's edge is green. It is
+/* THE RIGHT ANSWER WEARS THE THEME'S OWN HUE (owner, 2026-11-25: green first, then "the colour of the theme in a hue of it"): its edge and tick are `--active`, its words `--active-text`. It is
    used for "correct" and nothing else, and a wrong pick stays calm and grey. */
-.exam-frame { --ok-edge: oklch(.74 .15 152); }
-.app.theme-light .exam-frame { --ok-edge: oklch(.5 .14 152); }
+.exam-frame { --ok-edge: var(--active); }
 .exam-frame .result__choices { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
 .exam-frame .rc { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--ground); font-size: 16px; line-height: 1.4; color: var(--t2); }
 .exam-frame .rc__l { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--t3); width: 1em; flex: none; }
@@ -384,10 +383,10 @@
 .exam-frame .rc__ok { width: 20px; height: 20px; flex: none; color: var(--ok-edge); }
 .exam-frame .rc__ok svg { width: 100%; height: 100%; display: block; }
 .exam-frame .rc.is-right { border: 1.5px solid var(--ok-edge); background: color-mix(in oklab, var(--ok-edge) 9%, var(--ground)); color: var(--t1); }
-.exam-frame .rc.is-right .rc__l { color: var(--ok-edge); }
+.exam-frame .rc.is-right .rc__l { color: var(--active-text); }
 .exam-frame .rc.is-picked { color: var(--t3); }
 .exam-frame .result__q:has(.result__opts[open]) > .ans { display: none; }
-.exam-frame .result__q .ans--right, .exam-frame .result__q .ans--right .ans__l { color: var(--ok-edge); }
+.exam-frame .result__q .ans--right, .exam-frame .result__q .ans--right .ans__l { color: var(--active-text); }
 .exam-frame .result__note { margin: 10px 0 0; padding: 0 2px; font-size: 14px; line-height: 1.5; color: var(--t2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .exam-frame .result__page { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px; color: var(--t3); }
 .exam-frame .result__page svg { width: 14px; height: 14px; }
