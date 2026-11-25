@@ -41254,7 +41254,8 @@
          "HF, VHF and UHF",
          "LF, MF and HF"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 21
        },
        {
         "id": "M2.MA.Q2",
@@ -41265,7 +41266,8 @@
          "The ground wave"
         ],
         "correct": 2,
-        "explain": "The ground wave follows the earth's surface; the sky wave is returned by the ionosphere."
+        "explain": "The ground wave follows the earth's surface; the sky wave is returned by the ionosphere.",
+        "page": 32
        },
        {
         "id": "M2.MA.Q3",
@@ -41275,7 +41277,8 @@
          "Both are vertically polarized",
          "Navigation vertical, communication horizontal"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 60
        },
        {
         "id": "M2.MA.Q4",
@@ -41286,7 +41289,8 @@
          "At the resonant frequency f0"
         ],
         "correct": 2,
-        "explain": "Series resonance gives minimum impedance at f0; parallel resonance gives maximum impedance at f0."
+        "explain": "Series resonance gives minimum impedance at f0; parallel resonance gives maximum impedance at f0.",
+        "page": 109
        },
        {
         "id": "M2.MA.Q5",
@@ -41296,7 +41300,8 @@
          "75 Ω",
          "150 Ω"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 94
        },
        {
         "id": "M2.MA.Q6",
@@ -41307,7 +41312,8 @@
          "Superposition makes new frequencies; modulation does not"
         ],
         "correct": 1,
-        "explain": "Modulation creates new (side) frequencies; superposition only adds the signals."
+        "explain": "Modulation creates new (side) frequencies; superposition only adds the signals.",
+        "page": 139
        },
        {
         "id": "M2.MA.Q7",
@@ -41318,7 +41324,8 @@
          "Varying the carrier amplitude by the information signal"
         ],
         "correct": 0,
-        "explain": "FM varies the carrier frequency; AM varies the carrier amplitude."
+        "explain": "FM varies the carrier frequency; AM varies the carrier amplitude.",
+        "page": 154
        },
        {
         "id": "M2.MA.Q8",
@@ -41328,7 +41335,8 @@
          "ASK, FSK and PSK",
          "PAM, PLM and PPM"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 162
        },
        {
         "id": "M2.MA.Q9",
@@ -41338,7 +41346,8 @@
          "Harmonics of the carrier",
          "Image frequencies"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 185
        },
        {
         "id": "M2.MA.Q10",
@@ -41348,7 +41357,8 @@
          "Only aircraft with ACARS",
          "All IFR aircraft at any level"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 266
        },
        {
         "id": "M2.MA.Q11",
@@ -41358,7 +41368,8 @@
          "2 MHz to 30 MHz",
          "118 MHz to 137 MHz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 273
        },
        {
         "id": "M2.MA.Q12",
@@ -41368,7 +41379,8 @@
          "Two",
          "Four"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 297
        },
        {
         "id": "M2.MA.Q13",
@@ -41378,7 +41390,8 @@
          "The purser",
          "The boarding music"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 241
        },
        {
         "id": "M2.MA.Q14",
@@ -41388,7 +41401,8 @@
          "The last 30 minutes",
          "The last 120 minutes"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 303
        },
        {
         "id": "M2.MA.Q15",
@@ -41398,7 +41412,8 @@
          "VHF 3 or SATCOM, depending on location",
          "The ELT or the transponder, as needed"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 313
        },
        {
         "id": "M2.MA.Q16",
@@ -41408,7 +41423,8 @@
          "Ka-band",
          "L-band"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 356
        },
        {
         "id": "M2.MA.Q17",
@@ -41418,7 +41434,8 @@
          "121.5 MHz, 156 MHz and 406 MHz",
          "121.5 MHz, 330 MHz and 406 MHz"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 400
        },
        {
         "id": "M2.MA.Q18",
@@ -41429,7 +41446,8 @@
          "The magnetic bearing to a ground station"
         ],
         "correct": 1,
-        "explain": "QDR is the magnetic bearing from the station; QDM is the magnetic bearing to it. They differ by 180°."
+        "explain": "QDR is the magnetic bearing from the station; QDM is the magnetic bearing to it. They differ by 180°.",
+        "page": 450
        },
        {
         "id": "M2.MA.Q19",
@@ -41439,7 +41457,8 @@
          "108 MHz to 118 MHz",
          "962 MHz to 1213 MHz"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 460
        },
        {
         "id": "M2.MA.Q20",
@@ -41449,7 +41468,8 @@
          "Only the sense antenna",
          "Both antennas"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 483
        },
        {
         "id": "M2.MA.Q21",
@@ -41459,7 +41479,8 @@
          "True north",
          "Magnetic north"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 492
        },
        {
         "id": "M2.MA.Q22",
@@ -41470,7 +41491,8 @@
          "The right lobe"
         ],
         "correct": 1,
-        "explain": "The 90 Hz lobe is on the left and the 150 Hz lobe on the right; left of the centreline the deviation bar moves right, towards the runway."
+        "explain": "The 90 Hz lobe is on the left and the 150 Hz lobe on the right; left of the centreline the deviation bar moves right, towards the runway.",
+        "page": 543
        },
        {
         "id": "M2.MA.Q23",
@@ -41480,7 +41502,8 @@
          "1300 Hz and an amber light",
          "400 Hz and a blue light"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 579
        },
        {
         "id": "M2.MA.Q24",
@@ -41490,7 +41513,8 @@
          "40",
          "126"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 597
        },
        {
         "id": "M2.MA.Q25",
@@ -41500,7 +41524,8 @@
          "Identifying aircraft",
          "Detecting rain"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 605
        },
        {
         "id": "M2.MA.Q26",
@@ -41510,7 +41535,8 @@
          "The height above the ground station",
          "The slant distance to the ground station"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 649
        },
        {
         "id": "M2.MA.Q27",
@@ -41520,7 +41546,8 @@
          "0 ft to 10,000 ft",
          "-1000 ft to +50,000 ft"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 680
        },
        {
         "id": "M2.MA.Q28",
@@ -41530,7 +41557,8 @@
          "Receives on 1030 MHz, replies on 1090 MHz",
          "Receives and replies on 1030 MHz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 709
        },
        {
         "id": "M2.MA.Q29",
@@ -41541,7 +41569,8 @@
          "TRAFFIC, TRAFFIC"
         ],
         "correct": 2,
-        "explain": "A TA only warns of traffic; an RA gives vertical commands such as CLIMB or MONITOR VERTICAL SPEED."
+        "explain": "A TA only warns of traffic; an RA gives vertical commands such as CLIMB or MONITOR VERTICAL SPEED.",
+        "page": 763
        },
        {
         "id": "M2.MA.Q30",
@@ -41552,7 +41581,8 @@
          "To change the current vertical rate"
         ],
         "correct": 0,
-        "explain": "Preventive advisories say what to avoid; corrective advisories ask for a change of vertical rate."
+        "explain": "Preventive advisories say what to avoid; corrective advisories ask for a change of vertical rate.",
+        "page": 763
        },
        {
         "id": "M2.MA.Q31",
@@ -41562,7 +41592,8 @@
          "X-band",
          "L-band"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 853
        },
        {
         "id": "M2.MA.Q32",
@@ -41572,7 +41603,8 @@
          "48 primary and up to 12 spares",
          "24 primary and up to 6 spares"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 884
        },
        {
         "id": "M2.MA.Q33",
@@ -41582,7 +41614,8 @@
          "The differential positioning service (DPS)",
          "The precision positioning service (PPS)"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 886
        },
        {
         "id": "M2.MA.Q34",
@@ -41593,7 +41626,8 @@
          "The INS"
         ],
         "correct": 1,
-        "explain": "The IRS has the variation in memory; the INS gives only a platform heading and needs a flux valve for magnetic heading."
+        "explain": "The IRS has the variation in memory; the INS gives only a platform heading and needs a flux valve for magnetic heading.",
+        "page": 976
        },
        {
         "id": "M2.MA.Q35",
@@ -41603,7 +41637,8 @@
          "Every 7 days",
          "Every 28 days"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1025
        },
        {
         "id": "M2.MA.Q36",
@@ -41614,7 +41649,8 @@
          "When RNP is better than the FOM"
         ],
         "correct": 0,
-        "explain": "RNP is the accuracy required for the airspace; ANP is the accuracy the system actually achieves."
+        "explain": "RNP is the accuracy required for the airspace; ANP is the accuracy the system actually achieves.",
+        "page": 1057
        },
        {
         "id": "M2.MA.Q37",
@@ -41624,7 +41660,8 @@
          "Magnetic grid",
          "WGS 84"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1015
        },
        {
         "id": "M2.MA.Q38",
@@ -41634,7 +41671,8 @@
          "The reporting mode",
          "The monitoring mode"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1146
        },
        {
         "id": "M2.MA.Q39",
@@ -41644,7 +41682,8 @@
          "Many applications sharing the same hardware",
          "Each system with its own processor and wiring"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1267
        },
        {
         "id": "M2.MA.Q40",
@@ -41654,7 +41693,8 @@
          "A duplex bus with up to 120 receivers",
          "A simplex bus with up to 20 receivers"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1286
        }
       ]
      }
@@ -41676,7 +41716,8 @@
          "A transmitter, a receiver and a relay",
          "An oscillator and an antenna"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 6
        },
        {
         "id": "M2.MB.Q2",
@@ -41687,7 +41728,8 @@
          "Long-range high frequency communication"
         ],
         "correct": 2,
-        "explain": "The sky wave is returned by the ionosphere for long range; the ground wave follows the earth's surface."
+        "explain": "The sky wave is returned by the ionosphere for long range; the ground wave follows the earth's surface.",
+        "page": 32
        },
        {
         "id": "M2.MB.Q3",
@@ -41697,7 +41739,8 @@
          "The direction of the electrical field",
          "The direction of propagation"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 60
        },
        {
         "id": "M2.MB.Q4",
@@ -41707,7 +41750,8 @@
          "An open line",
          "A standing wave"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 98
        },
        {
         "id": "M2.MB.Q5",
@@ -41718,7 +41762,8 @@
          "A pure inductor"
         ],
         "correct": 0,
-        "explain": "A shorted λ/4 line acts like a parallel resonant circuit; an open λ/4 line acts like a series resonant circuit."
+        "explain": "A shorted λ/4 line acts like a parallel resonant circuit; an open λ/4 line acts like a series resonant circuit.",
+        "page": 102
        },
        {
         "id": "M2.MB.Q6",
@@ -41728,7 +41773,8 @@
          "Oscillator, modulator, power amplifier and antenna",
          "Mixer, IF amplifier, detector and loudspeaker"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 118
        },
        {
         "id": "M2.MB.Q7",
@@ -41738,7 +41784,8 @@
          "fc + fs and fc − fs, the side frequencies",
          "2fc and 3fc, the carrier harmonics"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 145
        },
        {
         "id": "M2.MB.Q8",
@@ -41748,7 +41795,8 @@
          "The high cost of the IF filter",
          "Low selectivity, so adjacent stations interfere"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 174
        },
        {
         "id": "M2.MB.Q9",
@@ -41758,7 +41806,8 @@
          "To make keyed transmissions audible",
          "To keep the receiver tuned to the station"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 200
        },
        {
         "id": "M2.MB.Q10",
@@ -41768,7 +41817,8 @@
          "The ACARS data frequency",
          "The international emergency frequency"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 256
        },
        {
         "id": "M2.MB.Q11",
@@ -41779,7 +41829,8 @@
          "FM"
         ],
         "correct": 0,
-        "explain": "VHF COM uses AM, not FM."
+        "explain": "VHF COM uses AM, not FM.",
+        "page": 259
        },
        {
         "id": "M2.MB.Q12",
@@ -41789,7 +41840,8 @@
          "A 1 kHz tune tone in the headphones",
          "A green light on the RMP"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 280
        },
        {
         "id": "M2.MB.Q13",
@@ -41799,7 +41851,8 @@
          "To reduce the pilot's workload",
          "To record ATC messages"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 295
        },
        {
         "id": "M2.MB.Q14",
@@ -41809,7 +41862,8 @@
          "Two",
          "Six"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 304
        },
        {
         "id": "M2.MB.Q15",
@@ -41820,7 +41874,8 @@
          "Data sent from the aircraft to the ground"
         ],
         "correct": 2,
-        "explain": "Down link is aircraft to ground; up link is ground to aircraft."
+        "explain": "Down link is aircraft to ground; up link is ground to aircraft.",
+        "page": 313
        },
        {
         "id": "M2.MB.Q16",
@@ -41830,7 +41885,8 @@
          "About 800 to 1000 km",
          "About 20,000 km"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 353
        },
        {
         "id": "M2.MB.Q17",
@@ -41840,7 +41896,8 @@
          "A g-load above 5 g or contact with water",
          "A fire warning in the cockpit"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 400
        },
        {
         "id": "M2.MB.Q18",
@@ -41850,7 +41907,8 @@
          "The difference between two VOR radials",
          "The difference between true and magnetic north"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 443
        },
        {
         "id": "M2.MB.Q19",
@@ -41861,7 +41919,8 @@
          "The magnetic part"
         ],
         "correct": 2,
-        "explain": "The loop antenna receives the magnetic part; the sense antenna receives the electric part."
+        "explain": "The loop antenna receives the magnetic part; the sense antenna receives the electric part.",
+        "page": 466
        },
        {
         "id": "M2.MB.Q20",
@@ -41871,7 +41930,8 @@
          "About 50 to 200 NM",
          "About 500 to 1000 NM"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 493
        },
        {
         "id": "M2.MB.Q21",
@@ -41881,7 +41941,8 @@
          "Amber",
          "Blue"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 498
        },
        {
         "id": "M2.MB.Q22",
@@ -41891,7 +41952,8 @@
          "190 to 1750 kHz",
          "108.10 to 111.95 MHz"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 541
        },
        {
         "id": "M2.MB.Q23",
@@ -41901,7 +41963,8 @@
          "3000 Hz and a white light",
          "400 Hz and a blue light"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 579
        },
        {
         "id": "M2.MB.Q24",
@@ -41911,7 +41974,8 @@
          "C-band, about 5 GHz",
          "VHF band, about 110 MHz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 592
        },
        {
         "id": "M2.MB.Q25",
@@ -41921,7 +41985,8 @@
          "Coax cables",
          "Waveguides"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 630
        },
        {
         "id": "M2.MB.Q26",
@@ -41931,7 +41996,8 @@
          "1350 Hz",
          "400 Hz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 655
        },
        {
         "id": "M2.MB.Q27",
@@ -41942,7 +42008,8 @@
          "A four-digit identification code"
         ],
         "correct": 0,
-        "explain": "Mode C sends barometric altitude; Mode A sends the four-digit identification code."
+        "explain": "Mode C sends barometric altitude; Mode A sends the four-digit identification code.",
+        "page": 705
        },
        {
         "id": "M2.MB.Q28",
@@ -41952,7 +42019,8 @@
          "The VHF data radio on 131 MHz",
          "The Mode S 1090 MHz extended squitter"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 749
        },
        {
         "id": "M2.MB.Q29",
@@ -41962,7 +42030,8 @@
          "Both planes equally",
          "The horizontal plane only"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 761
        },
        {
         "id": "M2.MB.Q30",
@@ -41973,7 +42042,8 @@
          "A white filled diamond"
         ],
         "correct": 1,
-        "explain": "An RA intruder is a red filled square; a TA intruder is an amber filled circle."
+        "explain": "An RA intruder is a red filled square; a TA intruder is an amber filled circle.",
+        "page": 796
        },
        {
         "id": "M2.MB.Q31",
@@ -41983,7 +42053,8 @@
          "The temperature suddenly drops below zero",
          "A strong headwind suddenly changes to a tailwind"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 862
        },
        {
         "id": "M2.MB.Q32",
@@ -41993,7 +42064,8 @@
          "About 90 minutes",
          "About 24 hours"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 884
        },
        {
         "id": "M2.MB.Q33",
@@ -42003,7 +42075,8 @@
          "2 NM per hour or less",
          "20 NM per hour or less"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 923
        },
        {
         "id": "M2.MB.Q34",
@@ -42014,7 +42087,8 @@
          "About 1 hour"
         ],
         "correct": 1,
-        "explain": "INS alignment takes about 15 minutes; IRS alignment about 10 minutes."
+        "explain": "INS alignment takes about 15 minutes; IRS alignment about 10 minutes.",
+        "page": 961
        },
        {
         "id": "M2.MB.Q35",
@@ -42024,7 +42098,8 @@
          "The price of fuel per kilogram",
          "The cost of one flight hour"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1014
        },
        {
         "id": "M2.MB.Q36",
@@ -42034,7 +42109,8 @@
          "Nothing, it cannot work at all",
          "Detect a fault but not exclude it"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1078
        },
        {
         "id": "M2.MB.Q37",
@@ -42044,7 +42120,8 @@
          "200 kt",
          "250 kt"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1030
        },
        {
         "id": "M2.MB.Q38",
@@ -42054,7 +42131,8 @@
          "The BITE",
          "The MCDU"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1148
        },
        {
         "id": "M2.MB.Q39",
@@ -42064,7 +42142,8 @@
          "Flight Automatic Navigation System",
          "Free Air Navigation Service"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1377
        },
        {
         "id": "M2.MB.Q40",
@@ -42074,7 +42153,8 @@
          "Common Processor Interface Output Module",
          "Central Power Input/Output Monitor"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1360
        }
       ]
      }
@@ -42096,7 +42176,8 @@
          "The amplitude of the voltage",
          "The medium used"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 23
        },
        {
         "id": "M2.MC.Q2",
@@ -42106,7 +42187,8 @@
          "Only during the day",
          "Both day and night"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 41
        },
        {
         "id": "M2.MC.Q3",
@@ -42116,7 +42198,8 @@
          "A filter that selects one frequency from the line",
          "An amplifier that strengthens the received RF signal"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 48
        },
        {
         "id": "M2.MC.Q4",
@@ -42126,7 +42209,8 @@
          "150π, about 471 Ω",
          "120π, about 377 Ω"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 73
        },
        {
         "id": "M2.MC.Q5",
@@ -42136,7 +42220,8 @@
          "Raising the resonant frequency of the circuit",
          "Passing the widest possible band of frequencies"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 114
        },
        {
         "id": "M2.MC.Q6",
@@ -42146,7 +42231,8 @@
          "Crystal oscillators",
          "Meissner oscillators"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 120
        },
        {
         "id": "M2.MC.Q7",
@@ -42156,7 +42242,8 @@
          "It leaves it unchanged",
          "It halves it"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 149
        },
        {
         "id": "M2.MC.Q8",
@@ -42166,7 +42253,8 @@
          "Converts the variable antenna frequency into a fixed IF",
          "Converts the audio signal into a modulated carrier"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 183
        },
        {
         "id": "M2.MC.Q9",
@@ -42176,7 +42264,8 @@
          "Keeps the received amplitude constant",
          "Keeps the receiver tuned to one station"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 191
        },
        {
         "id": "M2.MC.Q10",
@@ -42186,7 +42275,8 @@
          "Two",
          "Three"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 259
        },
        {
         "id": "M2.MC.Q11",
@@ -42196,7 +42286,8 @@
          "The radio management panels with the antennas",
          "The flight data recorder with the cockpit voice recorder"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 216
        },
        {
         "id": "M2.MC.Q12",
@@ -42206,7 +42297,8 @@
          "Sword antennas and dipoles",
          "Rod antennas and slot antennas"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 291
        },
        {
         "id": "M2.MC.Q13",
@@ -42216,7 +42308,8 @@
          "Communication between the cabin attendant stations",
          "Announcements to the passengers"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 231
        },
        {
         "id": "M2.MC.Q14",
@@ -42226,7 +42319,8 @@
          "5 minutes after the last engine is shut down on the ground",
          "When the parking brake is set at the gate"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 304
        },
        {
         "id": "M2.MC.Q15",
@@ -42236,7 +42330,8 @@
          "With the installed airborne data loader",
          "With a portable data loader on the front of the MU"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 316
        },
        {
         "id": "M2.MC.Q16",
@@ -42246,7 +42341,8 @@
          "Transmitter, receiver and antenna on the aircraft",
          "Satellite, aircraft earth station and ground earth station"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 355
        },
        {
         "id": "M2.MC.Q17",
@@ -42257,7 +42353,8 @@
          "A ground radar system"
         ],
         "correct": 0,
-        "explain": "COSPAS/SARSAT is a low earth orbit system; GEOSAR is geostationary."
+        "explain": "COSPAS/SARSAT is a low earth orbit system; GEOSAR is geostationary.",
+        "page": 403
        },
        {
         "id": "M2.MC.Q18",
@@ -42267,7 +42364,8 @@
          "Drift",
          "Deviation"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 445
        },
        {
         "id": "M2.MC.Q19",
@@ -42277,7 +42375,8 @@
          "Bending of signals by mountains",
          "Loss of signal directly over the station"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 479
        },
        {
         "id": "M2.MC.Q20",
@@ -42287,7 +42386,8 @@
          "A DME is collocated with the VOR",
          "The VOR is a Doppler VOR"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 493
        },
        {
         "id": "M2.MC.Q21",
@@ -42297,7 +42397,8 @@
          "A DVOR is cheaper to build and maintain there",
          "A conventional VOR may misnavigate due to reflections"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 517
        },
        {
         "id": "M2.MC.Q22",
@@ -42307,7 +42408,8 @@
          "108.10 to 111.95 MHz",
          "329.15 to 335.0 MHz"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 541
        },
        {
         "id": "M2.MC.Q23",
@@ -42317,7 +42419,8 @@
          "The inner marker",
          "The middle marker"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 579
        },
        {
         "id": "M2.MC.Q24",
@@ -42327,7 +42430,8 @@
          "On the bottom of the fuselage",
          "On the vertical stabilizer"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 559
        },
        {
         "id": "M2.MC.Q25",
@@ -42337,7 +42441,8 @@
          "Better penetration of clouds and heavy rain",
          "Stronger reflections, so small objects are found"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 609
        },
        {
         "id": "M2.MC.Q26",
@@ -42347,7 +42452,8 @@
          "126 X and 126 Y channels",
          "40 X and 40 Y channels"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 657
        },
        {
         "id": "M2.MC.Q27",
@@ -42357,7 +42463,8 @@
          "From the cockpit to sea level",
          "From the nose to the runway threshold"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 680
        },
        {
         "id": "M2.MC.Q28",
@@ -42367,7 +42474,8 @@
          "Hijacking",
          "Emergency"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 740
        },
        {
         "id": "M2.MC.Q29",
@@ -42377,7 +42485,8 @@
          "On the vertical speed scale of the PFD",
          "On the heading scale of the ND"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 766
        },
        {
         "id": "M2.MC.Q30",
@@ -42388,7 +42497,8 @@
          "A solid white diamond"
         ],
         "correct": 2,
-        "explain": "Proximate traffic is a solid white diamond; other traffic is a hollow white diamond."
+        "explain": "Proximate traffic is a solid white diamond; other traffic is a hollow white diamond.",
+        "page": 804
        },
        {
         "id": "M2.MC.Q31",
@@ -42398,7 +42508,8 @@
          "The advisory alert, level 1",
          "The caution alert, level 2"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 869
        },
        {
         "id": "M2.MC.Q32",
@@ -42408,7 +42519,8 @@
          "To find the satellite's speed",
          "To give a second position fix"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 888
        },
        {
         "id": "M2.MC.Q33",
@@ -42418,7 +42530,8 @@
          "All parts are tied with straps for transport",
          "All parts are fixed to the aircraft structure"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 946
        },
        {
         "id": "M2.MC.Q34",
@@ -42429,7 +42542,8 @@
          "By the crew, step by step into the CDU"
         ],
         "correct": 2,
-        "explain": "Only the INS holds the route waypoints; with an IRS the route is calculated by the FMS."
+        "explain": "Only the INS holds the route waypoints; with an IRS the route is calculated by the FMS.",
+        "page": 957
        },
        {
         "id": "M2.MC.Q35",
@@ -42439,7 +42553,8 @@
          "ARINC 702",
          "ARINC 424"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1013
        },
        {
         "id": "M2.MC.Q36",
@@ -42449,7 +42564,8 @@
          "0.5 NM",
          "50 NM"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1053
        },
        {
         "id": "M2.MC.Q37",
@@ -42459,7 +42575,8 @@
          "The radio frequencies",
          "An alternative routing"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1026
        },
        {
         "id": "M2.MC.Q38",
@@ -42469,7 +42586,8 @@
          "3 minutes after engine start",
          "As soon as the first engine starts"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1210
        },
        {
         "id": "M2.MC.Q39",
@@ -42479,7 +42597,8 @@
          "ARINC 429",
          "ARINC 664"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1284
        },
        {
         "id": "M2.MC.Q40",
@@ -42489,7 +42608,8 @@
          "Units that send position reports to air traffic control by data link",
          "Units that store and retrieve information traditionally kept on paper"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1370
        }
       ]
      }
@@ -42511,7 +42631,8 @@
          "3000 Hz",
          "1350 Hz"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 28
        },
        {
         "id": "M2.MD.Q2",
@@ -42521,7 +42642,8 @@
          "The silent area between the end of the ground wave and the first sky wave",
          "The area that is covered by the ground wave alone"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 45
        },
        {
         "id": "M2.MD.Q3",
@@ -42531,7 +42653,8 @@
          "Equally in all directions in space",
          "At 90° to its axis, virtually zero along its axis"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 64
        },
        {
         "id": "M2.MD.Q4",
@@ -42541,7 +42664,8 @@
          "An asymmetric line",
          "An unshielded line"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 90
        },
        {
         "id": "M2.MD.Q5",
@@ -42551,7 +42675,8 @@
          "f0 = 2π√(LC)",
          "f0 = 1 / (2π√(LC))"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 107
        },
        {
         "id": "M2.MD.Q6",
@@ -42561,7 +42686,8 @@
          "Light on a crystal makes a current flow",
          "Heat on a crystal makes its frequency rise"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 125
        },
        {
         "id": "M2.MD.Q7",
@@ -42571,7 +42697,8 @@
          "The output power of the transmitter",
          "The maximum frequency of the information signal"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 147
        },
        {
         "id": "M2.MD.Q8",
@@ -42581,7 +42708,8 @@
          "Generate, modulate, amplify and radiate",
          "Mix, filter, multiply and divide"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 172
        },
        {
         "id": "M2.MD.Q9",
@@ -42591,7 +42719,8 @@
          "Keeps the receiver tuned to the selected station",
          "Makes unmodulated transmissions audible"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 187
        },
        {
         "id": "M2.MD.Q10",
@@ -42601,7 +42730,8 @@
          "The time of day and night",
          "The season of the year"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 259
        },
        {
         "id": "M2.MD.Q11",
@@ -42611,7 +42741,8 @@
          "The standby and active frequencies swap windows",
          "The active frequency is sent to all RMPs as standby"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 245
        },
        {
         "id": "M2.MD.Q12",
@@ -42621,7 +42752,8 @@
          "Ground stations have stopped sending the codes",
          "ACARS data transmission is now widely used"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 295
        },
        {
         "id": "M2.MD.Q13",
@@ -42632,7 +42764,8 @@
          "FM or AM"
         ],
         "correct": 0,
-        "explain": "HF can use AM or SSB; VHF COM uses AM only."
+        "explain": "HF can use AM or SSB; VHF COM uses AM only.",
+        "page": 273
        },
        {
         "id": "M2.MD.Q14",
@@ -42642,7 +42775,8 @@
          "An underwater locator beacon (ULB)",
          "A flashing strobe light"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 303
        },
        {
         "id": "M2.MD.Q15",
@@ -42652,7 +42786,8 @@
          "The time the aircraft touches down",
          "The time the aircraft lifts off"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 314
        },
        {
         "id": "M2.MD.Q16",
@@ -42662,7 +42797,8 @@
          "Between 76° north and 76° south",
          "The whole earth, including the poles"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 353
        },
        {
         "id": "M2.MD.Q17",
@@ -42672,7 +42808,8 @@
          "75 mW",
          "700 mW"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 401
        },
        {
         "id": "M2.MD.Q18",
@@ -42683,7 +42820,8 @@
          "Always 180°"
         ],
         "correct": 2,
-        "explain": "QDM is the magnetic bearing to the station, QDR the bearing from it: always 180° apart."
+        "explain": "QDM is the magnetic bearing to the station, QDR the bearing from it: always 180° apart.",
+        "page": 451
        },
        {
         "id": "M2.MD.Q19",
@@ -42693,7 +42831,8 @@
          "Green",
          "Blue"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 483
        },
        {
         "id": "M2.MD.Q20",
@@ -42703,7 +42842,8 @@
          "Two",
          "Three"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 492
        },
        {
         "id": "M2.MD.Q21",
@@ -42713,7 +42853,8 @@
          "When 2° or more off the selected course",
          "When 30° or more off the selected course"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 502
        },
        {
         "id": "M2.MD.Q22",
@@ -42723,7 +42864,8 @@
          "Only those with odd tenths of a MHz",
          "Any tenth of a MHz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 544
        },
        {
         "id": "M2.MD.Q23",
@@ -42733,7 +42875,8 @@
          "Vertical, 75 MHz",
          "Horizontal, 108 MHz"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 583
        },
        {
         "id": "M2.MD.Q24",
@@ -42743,7 +42886,8 @@
          "MLS has no beams, only pulses from the DME",
          "MLS has scanning beams in azimuth and elevation"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 592
        },
        {
         "id": "M2.MD.Q25",
@@ -42753,7 +42897,8 @@
          "With electric and magnetic fields in a cavity",
          "With a rotating coil in a magnet"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 625
        },
        {
         "id": "M2.MD.Q26",
@@ -42763,7 +42908,8 @@
          "Pulses an aircraft sends to start a search",
          "Pulses that carry the station's Morse ident"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 655
        },
        {
         "id": "M2.MD.Q27",
@@ -42773,7 +42919,8 @@
          "The ground directly below",
          "The standard pressure of 1013.25 hPa"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 681
        },
        {
         "id": "M2.MD.Q28",
@@ -42783,7 +42930,8 @@
          "Each aircraft has a unique airframe address",
          "Each aircraft has a different squawk for life"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 705
        },
        {
         "id": "M2.MD.Q29",
@@ -42793,7 +42941,8 @@
          "Mode C",
          "Mode A"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 766
        },
        {
         "id": "M2.MD.Q30",
@@ -42804,7 +42953,8 @@
          "An amber filled circle"
         ],
         "correct": 2,
-        "explain": "A TA intruder is an amber filled circle; an RA intruder is a red filled square."
+        "explain": "A TA intruder is an amber filled circle; an RA intruder is a red filled square.",
+        "page": 810
        },
        {
         "id": "M2.MD.Q31",
@@ -42814,7 +42964,8 @@
          "Plus and minus 180°",
          "Plus and minus 30°"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 829
        },
        {
         "id": "M2.MD.Q32",
@@ -42824,7 +42975,8 @@
          "About 1 m",
          "About 100 m"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 886
        },
        {
         "id": "M2.MD.Q33",
@@ -42834,7 +42986,8 @@
          "Newton's first law",
          "Newton's second law"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 926
        },
        {
         "id": "M2.MD.Q34",
@@ -42845,7 +42998,8 @@
          "About 1 minute"
         ],
         "correct": 0,
-        "explain": "IRS alignment takes about 10 minutes; INS alignment about 15 minutes."
+        "explain": "IRS alignment takes about 10 minutes; INS alignment about 15 minutes.",
+        "page": 976
        },
        {
         "id": "M2.MD.Q35",
@@ -42855,7 +43009,8 @@
          "At both MCDUs",
          "At the ATC panel"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1018
        },
        {
         "id": "M2.MD.Q36",
@@ -42865,7 +43020,8 @@
          "The magnetic variation",
          "An error vector (bias)"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1064
        },
        {
         "id": "M2.MD.Q37",
@@ -42875,7 +43031,8 @@
          "The scratchpad",
          "The title line"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1020
        },
        {
         "id": "M2.MD.Q38",
@@ -42885,7 +43042,8 @@
          "Up to 100",
          "Up to 63"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1216
        },
        {
         "id": "M2.MD.Q39",
@@ -42895,7 +43053,8 @@
          "VHF only, with no other options",
          "SATCOM only, with VHF as a backup"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1373
        },
        {
         "id": "M2.MD.Q40",
@@ -42905,7 +43064,8 @@
          "A request to switch off the aircraft power",
          "A message that the test will take an hour"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1234
        }
       ]
      }
@@ -42927,7 +43087,8 @@
          "The time taken for one complete cycle",
          "The number of complete cycles in one second"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 10
        },
        {
         "id": "M2.ME.Q2",
@@ -42937,7 +43098,8 @@
          "λ/4",
          "λ"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 52
        },
        {
         "id": "M2.ME.Q3",
@@ -42947,7 +43109,8 @@
          "Two dipoles connected in parallel",
          "A loop plus one or more reflectors"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 67
        },
        {
         "id": "M2.ME.Q4",
@@ -42957,7 +43120,8 @@
          "Shorted line, maximum reflection",
          "Open line, no power transfer"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 98
        },
        {
         "id": "M2.ME.Q5",
@@ -42967,7 +43131,8 @@
          "Transformers and resistors",
          "Inductors and capacitors"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 105
        },
        {
         "id": "M2.ME.Q6",
@@ -42977,7 +43142,8 @@
          "It uses two oscillators: a reference oscillator and a VCO",
          "It uses a much higher reference frequency"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 131
        },
        {
         "id": "M2.ME.Q7",
@@ -42987,7 +43153,8 @@
          "Phase shift keying (PSK)",
          "Frequency shift keying (FSK)"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 162
        },
        {
         "id": "M2.ME.Q8",
@@ -42997,7 +43164,8 @@
          "It uses a lower IF",
          "It has no local oscillator"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 181
        },
        {
         "id": "M2.ME.Q9",
@@ -43007,7 +43175,8 @@
          "Placing the signal onto the HF carrier",
          "Recovering the signal from the HF carrier"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 194
        },
        {
         "id": "M2.ME.Q10",
@@ -43017,7 +43186,8 @@
          "VHF 2",
          "VHF 3"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 259
        },
        {
         "id": "M2.ME.Q11",
@@ -43027,7 +43197,8 @@
          "The oxygen mask microphone",
          "The handheld microphone"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 216
        },
        {
         "id": "M2.ME.Q12",
@@ -43037,7 +43208,8 @@
          "By a flashing SELCAL light",
          "By the missing sidetone"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 280
        },
        {
         "id": "M2.ME.Q13",
@@ -43047,7 +43219,8 @@
          "A loop antenna",
          "A λ/4 rod antenna"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 268
        },
        {
         "id": "M2.ME.Q14",
@@ -43057,7 +43230,8 @@
          "On the ground with the parking brake set",
          "At any time from the control panel"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 304
        },
        {
         "id": "M2.ME.Q15",
@@ -43067,7 +43241,8 @@
          "As the ELT homing receiver",
          "As the emergency frequency receiver"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 316
        },
        {
         "id": "M2.ME.Q16",
@@ -43077,7 +43252,8 @@
          "The Beam Steering Unit (BSU)",
          "The High Power Amplifier (HPA)"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 381
        },
        {
         "id": "M2.ME.Q17",
@@ -43087,7 +43263,8 @@
          "At least 90 days",
          "At least 48 hours"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 400
        },
        {
         "id": "M2.ME.Q18",
@@ -43097,7 +43274,8 @@
          "The aircraft's longitudinal axis",
          "The magnetic north pole"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 447
        },
        {
         "id": "M2.ME.Q19",
@@ -43108,7 +43286,8 @@
          "Finding position from the aircraft's speed"
         ],
         "correct": 1,
-        "explain": "Theta navigation uses angles to stations (ADF, VOR); Rho navigation uses distances (DME)."
+        "explain": "Theta navigation uses angles to stations (ADF, VOR); Rho navigation uses distances (DME).",
+        "page": 454
        },
        {
         "id": "M2.ME.Q20",
@@ -43118,7 +43297,8 @@
          "A VOR combined with a DME to measure distance",
          "A VOR near an airport used for holdings and approaches"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 492
        },
        {
         "id": "M2.ME.Q21",
@@ -43128,7 +43308,8 @@
          "On the bottom of the fuselage",
          "In the nose radome"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 525
        },
        {
         "id": "M2.ME.Q22",
@@ -43139,7 +43320,8 @@
          "The upper lobe"
         ],
         "correct": 2,
-        "explain": "The glide slope's upper lobe is 90 Hz and lower lobe 150 Hz; below the path the deviation bar moves up."
+        "explain": "The glide slope's upper lobe is 90 Hz and lower lobe 150 Hz; below the path the deviation bar moves up.",
+        "page": 546
        },
        {
         "id": "M2.ME.Q23",
@@ -43149,7 +43331,8 @@
          "The flare height",
          "The threshold"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 577
        },
        {
         "id": "M2.ME.Q24",
@@ -43159,7 +43342,8 @@
          "The width of the radar beam",
          "The colour of the target"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 611
        },
        {
         "id": "M2.ME.Q25",
@@ -43169,7 +43353,8 @@
          "By switching off half of the antenna",
          "By changing the polarization from vertical to horizontal"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 647
        },
        {
         "id": "M2.ME.Q26",
@@ -43179,7 +43364,8 @@
          "962 to 1213 MHz",
          "108 to 118 MHz"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 649
        },
        {
         "id": "M2.ME.Q27",
@@ -43189,7 +43375,8 @@
          "It turns from amber to green and flashes",
          "It turns from white to red with an RA label"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 699
        },
        {
         "id": "M2.ME.Q28",
@@ -43199,7 +43386,8 @@
          "What information to send and when",
          "Which runway the aircraft will use"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 753
        },
        {
         "id": "M2.ME.Q29",
@@ -43209,7 +43397,8 @@
          "Data from the ATC radar",
          "Signals from radio beacons"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 764
        },
        {
         "id": "M2.ME.Q30",
@@ -43219,7 +43408,8 @@
          "WX, TURB and MAP",
          "STBY, TA and TA/RA"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 776
        },
        {
         "id": "M2.ME.Q31",
@@ -43229,7 +43419,8 @@
          "The distance to the runway",
          "The heading the pilot should avoid"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 862
        },
        {
         "id": "M2.ME.Q32",
@@ -43239,7 +43430,8 @@
          "The L2 signal and the Y code",
          "The L2 signal and the P code"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 896
        },
        {
         "id": "M2.ME.Q33",
@@ -43249,7 +43441,8 @@
          "Parallel to the earth's surface, whatever the attitude",
          "Pointed at true north and tilted down"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 936
        },
        {
         "id": "M2.ME.Q34",
@@ -43259,7 +43452,8 @@
          "The distance travelled",
          "The ground speed"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 931
        },
        {
         "id": "M2.ME.Q35",
@@ -43269,7 +43463,8 @@
          "The route from the runway to the airway system",
          "The route from the airway system to the runway"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1024
        },
        {
         "id": "M2.ME.Q36",
@@ -43280,7 +43475,8 @@
          "ARINC 429"
         ],
         "correct": 0,
-        "explain": "Here NDB means the navigation database, not a non-directional beacon."
+        "explain": "Here NDB means the navigation database, not a non-directional beacon.",
+        "page": 1060
        },
        {
         "id": "M2.ME.Q37",
@@ -43291,7 +43487,8 @@
          "The navigation accuracy required in an airspace"
         ],
         "correct": 2,
-        "explain": "RNP is the accuracy required for the airspace; ANP is the accuracy the system actually achieves."
+        "explain": "RNP is the accuracy required for the airspace; ANP is the accuracy the system actually achieves.",
+        "page": 1053
        },
        {
         "id": "M2.ME.Q38",
@@ -43301,7 +43498,8 @@
          "By matching the time, date and ATA chapter",
          "By repeating the flight with the same crew"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1206
        },
        {
         "id": "M2.ME.Q39",
@@ -43311,7 +43509,8 @@
          "Automatic Flight Data eXtraction",
          "Avionics Fibre Data eXchange"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1347
        },
        {
         "id": "M2.ME.Q40",
@@ -43321,7 +43520,8 @@
          "A radio network inside the cabin",
          "A fibre optic network"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1304
        }
       ]
      }
@@ -43343,7 +43543,8 @@
          "λ = f / c",
          "λ = c × T = c / f"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 23
        },
        {
         "id": "M2.MF.Q2",
@@ -43353,7 +43554,8 @@
          "Because of its directional characteristic",
          "Because of its circular polarization"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 71
        },
        {
         "id": "M2.MF.Q3",
@@ -43363,7 +43565,8 @@
          "A Yagi antenna",
          "A λ/4 rod antenna"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 83
        },
        {
         "id": "M2.MF.Q4",
@@ -43373,7 +43576,8 @@
          "The antenna must be longer than λ",
          "The transmitter and antenna impedances must match"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 96
        },
        {
         "id": "M2.MF.Q5",
@@ -43383,7 +43587,8 @@
          "No current flows, the voltage is at maximum",
          "Maximum current flows, the voltage is zero"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 100
        },
        {
         "id": "M2.MF.Q6",
@@ -43393,7 +43598,8 @@
          "The harmonic generator",
          "The output mixer"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 129
        },
        {
         "id": "M2.MF.Q7",
@@ -43403,7 +43609,8 @@
          "Quadrature AM (QAM)",
          "Quadrature PSK (QPSK)"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 164
        },
        {
         "id": "M2.MF.Q8",
@@ -43413,7 +43620,8 @@
          "Fuel injection control in vehicles",
          "Servo control in model aircraft"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 168
        },
        {
         "id": "M2.MF.Q9",
@@ -43424,7 +43632,8 @@
          "When carrier and information are far apart, like HF and AF"
         ],
         "correct": 2,
-        "explain": "Mixing is used when both frequencies come from the same band; modulation when they are far apart, like HF and AF."
+        "explain": "Mixing is used when both frequencies come from the same band; modulation when they are far apart, like HF and AF.",
+        "page": 136
        },
        {
         "id": "M2.MF.Q10",
@@ -43434,7 +43643,8 @@
          "More than 2000",
          "About 1000"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 256
        },
        {
         "id": "M2.MF.Q11",
@@ -43444,7 +43654,8 @@
          "Passengers",
          "Maintenance personnel"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 231
        },
        {
         "id": "M2.MF.Q12",
@@ -43454,7 +43665,8 @@
          "Filters the SELCAL tones out of the audio",
          "Amplifies the received signal for the receiver"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 286
        },
        {
         "id": "M2.MF.Q13",
@@ -43464,7 +43676,8 @@
          "AM",
          "FM"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 279
        },
        {
         "id": "M2.MF.Q14",
@@ -43474,7 +43687,8 @@
          "The whole flight",
          "The last 30 minutes"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 303
        },
        {
         "id": "M2.MF.Q15",
@@ -43485,7 +43699,8 @@
          "A manual report from the pilot"
         ],
         "correct": 0,
-        "explain": "The load sheet is an up link: ground to aircraft."
+        "explain": "The load sheet is an up link: ground to aircraft.",
+        "page": 314
        },
        {
         "id": "M2.MF.Q16",
@@ -43495,7 +43710,8 @@
          "By a motor that turns it once a flight",
          "By data from the beam steering unit"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 385
        },
        {
         "id": "M2.MF.Q17",
@@ -43505,7 +43721,8 @@
          "Homing in on the aircraft close by",
          "Sending the aircraft identity"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 407
        },
        {
         "id": "M2.MF.Q18",
@@ -43515,7 +43732,8 @@
          "The direction the aircraft's nose is pointing",
          "The direction from the aircraft to a station"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 445
        },
        {
         "id": "M2.MF.Q19",
@@ -43525,7 +43743,8 @@
          "The average",
          "The minimums"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 470
        },
        {
         "id": "M2.MF.Q20",
@@ -43535,7 +43754,8 @@
          "The flashlight, sent in all directions",
          "The rotating beam of the lighthouse"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 495
        },
        {
         "id": "M2.MF.Q21",
@@ -43545,7 +43765,8 @@
          "Circular",
          "Vertical"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 523
        },
        {
         "id": "M2.MF.Q22",
@@ -43555,7 +43776,8 @@
          "About 0.35° offset",
          "About 5° offset"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 544
        },
        {
         "id": "M2.MF.Q23",
@@ -43565,7 +43787,8 @@
          "HIGH",
          "LOW"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 586
        },
        {
         "id": "M2.MF.Q24",
@@ -43575,7 +43798,8 @@
          "Only the localizer frequency",
          "Only the glide slope frequency"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 565
        },
        {
         "id": "M2.MF.Q25",
@@ -43585,7 +43809,8 @@
          "Impact Ionization Avalanche Transit Time",
          "Impulse Amplified Transmitter Tube"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 627
        },
        {
         "id": "M2.MF.Q26",
@@ -43596,7 +43821,8 @@
          "A secondary radar system"
         ],
         "correct": 2,
-        "explain": "The DME is a secondary radar (it gets replies); the radio altimeter is a primary radar (it uses echoes)."
+        "explain": "The DME is a secondary radar (it gets replies); the radio altimeter is a primary radar (it uses echoes).",
+        "page": 651
        },
        {
         "id": "M2.MF.Q27",
@@ -43606,7 +43832,8 @@
          "An amplitude modulated 110 MHz carrier wave",
          "A pulsed 1 GHz signal with a fixed frequency"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 690
        },
        {
         "id": "M2.MF.Q28",
@@ -43616,7 +43843,8 @@
          "A four-digit identification code",
          "A unique airframe address"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 705
        },
        {
         "id": "M2.MF.Q29",
@@ -43626,7 +43854,8 @@
          "Mode A does not reply to TCAS",
          "Mode A does not report altitude"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 766
        },
        {
         "id": "M2.MF.Q30",
@@ -43636,7 +43865,8 @@
          "It moves too fast for the radar beam",
          "It is always too far ahead of the aircraft"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 824
        },
        {
         "id": "M2.MF.Q31",
@@ -43646,7 +43876,8 @@
          "5 ft",
          "500 ft"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 872
        },
        {
         "id": "M2.MF.Q32",
@@ -43656,7 +43887,8 @@
          "On top of the fuselage",
          "On the vertical stabilizer"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 899
        },
        {
         "id": "M2.MF.Q33",
@@ -43666,7 +43898,8 @@
          "Availability",
          "Integrity"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 905
        },
        {
         "id": "M2.MF.Q34",
@@ -43676,7 +43909,8 @@
          "Only in flight above 10,000 ft",
          "At any time, on the ground or in flight"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1000
        },
        {
         "id": "M2.MF.Q35",
@@ -43686,7 +43920,8 @@
          "Pseudo-waypoints calculated by the FMS",
          "Radio beacons placed on the ground"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1029
        },
        {
         "id": "M2.MF.Q36",
@@ -43696,7 +43931,8 @@
          "Time keeping",
          "Vertical navigation"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1072
        },
        {
         "id": "M2.MF.Q37",
@@ -43707,7 +43943,8 @@
          "Minimum time"
         ],
         "correct": 2,
-        "explain": "CI 999 gives minimum time (maximum speed); CI 0 gives minimum fuel."
+        "explain": "CI 999 gives minimum time (maximum speed); CI 0 gives minimum fuel.",
+        "page": 1033
        },
        {
         "id": "M2.MF.Q38",
@@ -43717,7 +43954,8 @@
          "One that occurs in flight but is not reported after landing",
          "One that is permanent and stays after landing"
         ],
-        "correct": 1
+        "correct": 1,
+        "page": 1212
        },
        {
         "id": "M2.MF.Q39",
@@ -43727,7 +43965,8 @@
          "Only through the ACARS",
          "Directly, with no protection"
         ],
-        "correct": 0
+        "correct": 0,
+        "page": 1345
        },
        {
         "id": "M2.MF.Q40",
@@ -43737,7 +43976,8 @@
          "Checking the cabin air quality during the flight",
          "Detecting damage such as cracks at an early stage"
         ],
-        "correct": 2
+        "correct": 2,
+        "page": 1260
        }
       ]
      }

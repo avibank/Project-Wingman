@@ -372,10 +372,18 @@
 .exam-frame .result__opts > summary::-webkit-details-marker { display: none; }
 .exam-frame .result__opts > summary .chev { flex: none; margin-top: 6px; }
 .exam-frame .result__opts[open] > summary .chev { transform: rotate(225deg) translateY(-2px); }
-.exam-frame .result__choices { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--t2); }
-.exam-frame .result__choices li.is-right { color: var(--accent-ink); font-weight: 600; }
-.exam-frame .result__choices li.is-picked, .exam-frame .result__choices li.is-picked s { color: var(--t3); }
-.exam-frame .result__why { margin: 8px 0 0; font-size: 13px; color: var(--t2); line-height: 1.45; }
+.exam-frame .result__choices { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.exam-frame .rc { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--ground); font-size: 15px; line-height: 1.4; color: var(--t2); }
+.exam-frame .rc__l { font-family: var(--font-mono); font-weight: 600; font-size: 14px; width: 1.2em; flex: none; }
+.exam-frame .rc__t { flex: 1; min-width: 0; }
+.exam-frame .rc__tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--t3); flex: none; }
+.exam-frame .rc.is-right { border-color: var(--accent); background: var(--accent-soft); color: var(--t1); font-weight: 600; }
+.exam-frame .rc.is-right .rc__tag { color: var(--accent-ink); }
+.exam-frame .rc.is-picked { color: var(--t3); background: var(--raised); }
+.exam-frame .result__note { margin-top: 10px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--raised); display: grid; gap: 8px; }
+.exam-frame .result__note p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--t2); }
+.exam-frame .result__page { font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; color: var(--t3); }
+@media (prefers-reduced-motion: no-preference) { .exam-frame .result__opts[open] .rc { animation: exam-rise .25s var(--ease) backwards; } }
 .exam-frame .ans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
 .exam-frame .ans__l { font-family: var(--font-mono); font-weight: 600; }
 .exam-frame .ans--wrong { color: var(--t3); text-decoration-thickness: 1.5px; }
