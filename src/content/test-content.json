@@ -41236,6 +41236,2389 @@
      "batch": 10,
      "ref": "13.4",
      "pages": "1010–1134"
+    },
+    {
+     "id": "M2.MA",
+     "name": "Mock Exam A",
+     "lessons": [],
+     "batch": 11,
+     "quiz": {
+      "id": "M2.MA.QZ",
+      "name": "M13e — Mock exam 1",
+      "questions": [
+       {
+        "id": "M2.MA.Q1",
+        "question": "Which are the three most important frequency bands in communication engineering?",
+        "options": [
+         "VLF, LF and MF",
+         "HF, VHF and UHF",
+         "LF, MF and HF"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q2",
+        "question": "Which part of the radio wave travels outward along the ground?",
+        "options": [
+         "The space wave",
+         "The sky wave",
+         "The ground wave"
+        ],
+        "correct": 2,
+        "explain": "The ground wave follows the earth's surface; the sky wave is returned by the ionosphere."
+       },
+       {
+        "id": "M2.MA.Q3",
+        "question": "How are aviation navigation and communication signals polarized?",
+        "options": [
+         "Navigation horizontal, communication vertical",
+         "Navigation vertical, communication horizontal",
+         "Both are vertically polarized"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q4",
+        "question": "When is the impedance of a series resonant circuit lowest?",
+        "options": [
+         "Above the resonant frequency f0",
+         "Below the resonant frequency f0",
+         "At the resonant frequency f0"
+        ],
+        "correct": 2,
+        "explain": "Series resonance gives minimum impedance at f0; parallel resonance gives maximum impedance at f0."
+       },
+       {
+        "id": "M2.MA.Q5",
+        "question": "What is the standard impedance of coaxial cables in modern installations?",
+        "options": [
+         "50 Ω",
+         "75 Ω",
+         "150 Ω"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q6",
+        "question": "How does superposition differ from modulation?",
+        "options": [
+         "Superposition makes new frequencies; modulation does not",
+         "Superposition makes no new frequencies; modulation does",
+         "Neither of them makes any new frequencies"
+        ],
+        "correct": 1,
+        "explain": "Modulation creates new (side) frequencies; superposition only adds the signals."
+       },
+       {
+        "id": "M2.MA.Q7",
+        "question": "What is frequency modulation?",
+        "options": [
+         "Varying the carrier frequency by the information signal",
+         "Varying the pulse phase by the information signal",
+         "Varying the carrier amplitude by the information signal"
+        ],
+        "correct": 0,
+        "explain": "FM varies the carrier frequency; AM varies the carrier amplitude."
+       },
+       {
+        "id": "M2.MA.Q8",
+        "question": "What are the digital forms of AM, FM and phase modulation called?",
+        "options": [
+         "QAM, QPSK and BPSK",
+         "ASK, FSK and PSK",
+         "PAM, PLM and PPM"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q9",
+        "question": "What does a superhet receiver always create because of mixing?",
+        "options": [
+         "A DC offset",
+         "Harmonics of the carrier",
+         "Image frequencies"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q10",
+        "question": "Which aircraft need 8.33 kHz VHF channel spacing?",
+        "options": [
+         "Those able to fly above FL230",
+         "Only aircraft with ACARS",
+         "All IFR aircraft at any level"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q11",
+        "question": "What frequency range do HF COM systems use?",
+        "options": [
+         "225 MHz to 400 MHz",
+         "2 MHz to 30 MHz",
+         "118 MHz to 137 MHz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q12",
+        "question": "How many letters does a SELCAL code have?",
+        "options": [
+         "Six",
+         "Two",
+         "Four"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q13",
+        "question": "Which passenger address input has the highest priority?",
+        "options": [
+         "The cockpit crew",
+         "The boarding music",
+         "The purser"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q14",
+        "question": "How much of the flight does a solid-state cockpit voice recorder store?",
+        "options": [
+         "The last 30 minutes",
+         "The last 25 hours",
+         "The last 120 minutes"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q15",
+        "question": "Which systems can ACARS use to send its data?",
+        "options": [
+         "The ELT or the transponder, as needed",
+         "VHF 3 or SATCOM, depending on location",
+         "VHF 1 or VHF 2, depending on the crew"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q16",
+        "question": "Which frequency band does the aircraft use to talk to the SATCOM satellites?",
+        "options": [
+         "C-band",
+         "Ka-band",
+         "L-band"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q17",
+        "question": "Which emergency frequencies does an ELT transmit on?",
+        "options": [
+         "121.5 MHz, 243 MHz and 406 MHz",
+         "121.5 MHz, 156 MHz and 406 MHz",
+         "121.5 MHz, 330 MHz and 406 MHz"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q18",
+        "question": "What is QDR?",
+        "options": [
+         "The magnetic bearing to a ground station",
+         "The magnetic bearing from a ground station",
+         "The true bearing to a ground station"
+        ],
+        "correct": 1,
+        "explain": "QDR is the magnetic bearing from the station; QDM is the magnetic bearing to it. They differ by 180°."
+       },
+       {
+        "id": "M2.MA.Q19",
+        "question": "In which frequency band does the ADF receive?",
+        "options": [
+         "190 kHz to 1750 kHz",
+         "962 MHz to 1213 MHz",
+         "108 MHz to 118 MHz"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q20",
+        "question": "Which antenna is active when the ADF is in ANT mode?",
+        "options": [
+         "Only the loop antenna",
+         "Only the sense antenna",
+         "Both antennas"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q21",
+        "question": "What are VOR radials referenced to?",
+        "options": [
+         "True north",
+         "The runway heading",
+         "Magnetic north"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q22",
+        "question": "Which localizer lobe is modulated with 90 Hz?",
+        "options": [
+         "Both lobes equally",
+         "The left lobe",
+         "The right lobe"
+        ],
+        "correct": 1,
+        "explain": "The 90 Hz lobe is on the left and the 150 Hz lobe on the right; left of the centreline the deviation bar moves right, towards the runway."
+       },
+       {
+        "id": "M2.MA.Q23",
+        "question": "Which tone and light belong to the outer marker?",
+        "options": [
+         "3000 Hz and a white light",
+         "1300 Hz and an amber light",
+         "400 Hz and a blue light"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q24",
+        "question": "How many channels does MLS operate on?",
+        "options": [
+         "200",
+         "126",
+         "40"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q25",
+        "question": "What is secondary radar used for in aviation?",
+        "options": [
+         "Detecting rain",
+         "Identifying aircraft",
+         "Measuring height above the ground"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q26",
+        "question": "What distance does the DME measure?",
+        "options": [
+         "The height above the ground station",
+         "The ground distance to the ground station",
+         "The slant distance to the ground station"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q27",
+        "question": "What is the operating range of the low range radio altimeter?",
+        "options": [
+         "-20 ft to +2500 ft",
+         "0 ft to 10,000 ft",
+         "-1000 ft to +50,000 ft"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q28",
+        "question": "On which frequencies does an ATC transponder receive and reply?",
+        "options": [
+         "Receives on 1090 MHz, replies on 1030 MHz",
+         "Receives on 1030 MHz, replies on 1090 MHz",
+         "Receives and replies on 1030 MHz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q29",
+        "question": "Which aural alert comes with a TCAS traffic advisory (TA)?",
+        "options": [
+         "CLIMB, CLIMB",
+         "MONITOR VERTICAL SPEED",
+         "TRAFFIC, TRAFFIC"
+        ],
+        "correct": 2,
+        "explain": "A TA only warns of traffic; an RA gives vertical commands such as CLIMB or MONITOR VERTICAL SPEED."
+       },
+       {
+        "id": "M2.MA.Q30",
+        "question": "What does a TCAS preventive advisory tell the pilot?",
+        "options": [
+         "To avoid certain manoeuvres",
+         "To turn away from the intruder",
+         "To change the current vertical rate"
+        ],
+        "correct": 0,
+        "explain": "Preventive advisories say what to avoid; corrective advisories ask for a change of vertical rate."
+       },
+       {
+        "id": "M2.MA.Q31",
+        "question": "In which band does the modern weather radar operate?",
+        "options": [
+         "C-band",
+         "X-band",
+         "L-band"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MA.Q32",
+        "question": "How many satellites does GPS use?",
+        "options": [
+         "48 primary and up to 12 spares",
+         "12 primary and up to 2 spares",
+         "24 primary and up to 6 spares"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q33",
+        "question": "Which GPS service is used by civil users?",
+        "options": [
+         "The standard positioning service (SPS)",
+         "The precision positioning service (PPS)",
+         "The differential positioning service (DPS)"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MA.Q34",
+        "question": "Which system gives magnetic heading without a flux valve, because it stores the magnetic variation?",
+        "options": [
+         "The AHRS",
+         "The IRS",
+         "The INS"
+        ],
+        "correct": 1,
+        "explain": "The IRS has the variation in memory; the INS gives only a platform heading and needs a flux valve for magnetic heading."
+       },
+       {
+        "id": "M2.MA.Q35",
+        "question": "How often must the FMS navigation database be updated?",
+        "options": [
+         "Every 6 months",
+         "Every 7 days",
+         "Every 28 days"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q36",
+        "question": "When is the FMS navigation accuracy shown as HIGH?",
+        "options": [
+         "When ANP is better than RNP",
+         "When RNP is better than the FOM",
+         "When ANP is worse than RNP"
+        ],
+        "correct": 0,
+        "explain": "RNP is the accuracy required for the airspace; ANP is the accuracy the system actually achieves."
+       },
+       {
+        "id": "M2.MA.Q37",
+        "question": "Which CMCS mode can be selected only on the ground?",
+        "options": [
+         "The reporting mode",
+         "The monitoring mode",
+         "The interactive mode"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MA.Q38",
+        "question": "What is the central idea of Integrated Modular Avionics (IMA)?",
+        "options": [
+         "Many applications sharing the same hardware",
+         "Each system with its own processor and wiring",
+         "One application in each separate computer"
+        ],
+        "correct": 0
+       }
+      ]
+     }
+    },
+    {
+     "id": "M2.MB",
+     "name": "Mock Exam B",
+     "lessons": [],
+     "batch": 12,
+     "quiz": {
+      "id": "M2.MB.QZ",
+      "name": "M13e — Mock exam 2",
+      "questions": [
+       {
+        "id": "M2.MB.Q1",
+        "question": "What is the simplest radio communication system made of?",
+        "options": [
+         "A transmitter and a receiver",
+         "An oscillator and an antenna",
+         "A transmitter, a receiver and a relay"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q2",
+        "question": "What is the sky wave used for by day?",
+        "options": [
+         "Short-range low frequency communication",
+         "Line-of-sight UHF communication",
+         "Long-range high frequency communication"
+        ],
+        "correct": 2,
+        "explain": "The sky wave is returned by the ionosphere for long range; the ground wave follows the earth's surface."
+       },
+       {
+        "id": "M2.MB.Q3",
+        "question": "What defines the polarization of a radio wave?",
+        "options": [
+         "The direction of the magnetic field",
+         "The direction of the electrical field",
+         "The direction of propagation"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q4",
+        "question": "What does a mismatched antenna create on an RF line?",
+        "options": [
+         "An open line",
+         "A matched line",
+         "A standing wave"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q5",
+        "question": "What does a shorted λ/4 line act like?",
+        "options": [
+         "A parallel resonant circuit",
+         "A series resonant circuit",
+         "A pure inductor"
+        ],
+        "correct": 0,
+        "explain": "A shorted λ/4 line acts like a parallel resonant circuit; an open λ/4 line acts like a series resonant circuit."
+       },
+       {
+        "id": "M2.MB.Q6",
+        "question": "What are the major sub-assemblies of a transmitter?",
+        "options": [
+         "Mixer, IF amplifier, detector and loudspeaker",
+         "Oscillator, modulator, power amplifier and antenna",
+         "RF amplifier, local oscillator, mixer and filter"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q7",
+        "question": "Which new frequencies does amplitude modulation create?",
+        "options": [
+         "2fc and 3fc, the carrier harmonics",
+         "fc + fs and fc − fs, the side frequencies",
+         "fs + 455 kHz, the intermediate frequency"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q8",
+        "question": "What is the disadvantage of a TRF receiver?",
+        "options": [
+         "The high cost of the IF filter",
+         "Image frequencies created by the mixer",
+         "Low selectivity, so adjacent stations interfere"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q9",
+        "question": "What is the purpose of AGC?",
+        "options": [
+         "To keep the amplitude of a received station constant",
+         "To make keyed transmissions audible",
+         "To keep the receiver tuned to the station"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q10",
+        "question": "What is 121.5 MHz?",
+        "options": [
+         "The ACARS data frequency",
+         "The standard ATC frequency",
+         "The international emergency frequency"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q11",
+        "question": "What modulation does VHF COM use?",
+        "options": [
+         "AM",
+         "SSB",
+         "FM"
+        ],
+        "correct": 0,
+        "explain": "VHF COM uses AM, not FM."
+       },
+       {
+        "id": "M2.MB.Q12",
+        "question": "How can you tell HF tuning is in progress?",
+        "options": [
+         "A chime in the cockpit",
+         "A 1 kHz tune tone in the headphones",
+         "A green light on the RMP"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q13",
+        "question": "What is the task of the SELCAL system?",
+        "options": [
+         "To tune the VHF radios",
+         "To reduce the pilot's workload",
+         "To record ATC messages"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q14",
+        "question": "How many audio inputs does the CVR have?",
+        "options": [
+         "Four",
+         "Six",
+         "Two"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q15",
+        "question": "What is a down link?",
+        "options": [
+         "Data sent between two aircraft",
+         "Data sent from the ground to the aircraft",
+         "Data sent from the aircraft to the ground"
+        ],
+        "correct": 2,
+        "explain": "Down link is aircraft to ground; up link is ground to aircraft."
+       },
+       {
+        "id": "M2.MB.Q16",
+        "question": "At what height do the SATCOM satellites orbit?",
+        "options": [
+         "About 36,000 km",
+         "About 800 to 1000 km",
+         "About 20,000 km"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q17",
+        "question": "What switches an ELT on automatically?",
+        "options": [
+         "A fire warning in the cockpit",
+         "A g-load above 5 g or contact with water",
+         "A loss of aircraft electrical power"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q18",
+        "question": "What is variation?",
+        "options": [
+         "The difference between heading and bearing",
+         "The difference between two VOR radials",
+         "The difference between true and magnetic north"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q19",
+        "question": "Which part of the radio wave does the ADF loop antenna receive?",
+        "options": [
+         "The electric part",
+         "Both parts equally",
+         "The magnetic part"
+        ],
+        "correct": 2,
+        "explain": "The loop antenna receives the magnetic part; the sense antenna receives the electric part."
+       },
+       {
+        "id": "M2.MB.Q20",
+        "question": "What is the usual VOR range?",
+        "options": [
+         "About 5 to 20 NM",
+         "About 50 to 200 NM",
+         "About 500 to 1000 NM"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q21",
+        "question": "What is the colour for VOR on the navigation display?",
+        "options": [
+         "Green",
+         "Amber",
+         "Blue"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q22",
+        "question": "What frequency range does the ILS localizer use?",
+        "options": [
+         "329.15 to 335.0 MHz",
+         "190 to 1750 kHz",
+         "108.10 to 111.95 MHz"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q23",
+        "question": "Which tone and light belong to the middle marker?",
+        "options": [
+         "1300 Hz and an amber light",
+         "3000 Hz and a white light",
+         "400 Hz and a blue light"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q24",
+        "question": "What band does MLS operate in?",
+        "options": [
+         "L-band, about 1 GHz",
+         "C-band, about 5 GHz",
+         "VHF band, about 110 MHz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q25",
+        "question": "What carries microwaves in radar systems?",
+        "options": [
+         "Twisted pairs",
+         "Coax cables",
+         "Waveguides"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q26",
+        "question": "What tone does the DME station use for its Morse ident?",
+        "options": [
+         "1020 Hz",
+         "1350 Hz",
+         "400 Hz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q27",
+        "question": "What does a transponder send in Mode C?",
+        "options": [
+         "The barometric altitude",
+         "The aircraft's ground speed",
+         "A four-digit identification code"
+        ],
+        "correct": 0,
+        "explain": "Mode C sends barometric altitude; Mode A sends the four-digit identification code."
+       },
+       {
+        "id": "M2.MB.Q28",
+        "question": "What does ADS-B OUT use to transmit?",
+        "options": [
+         "The VHF data radio on 131 MHz",
+         "The SATCOM data unit on L-band",
+         "The Mode S 1090 MHz extended squitter"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q29",
+        "question": "In which plane does TCAS tell the crew to avoid an intruder?",
+        "options": [
+         "The vertical plane only",
+         "Both planes equally",
+         "The horizontal plane only"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q30",
+        "question": "How is a resolution advisory intruder shown on the ND?",
+        "options": [
+         "A white filled diamond",
+         "A red filled square",
+         "An amber filled circle"
+        ],
+        "correct": 1,
+        "explain": "An RA intruder is a red filled square; a TA intruder is an amber filled circle."
+       },
+       {
+        "id": "M2.MB.Q31",
+        "question": "Why is windshear so dangerous?",
+        "options": [
+         "The temperature suddenly drops below zero",
+         "Heavy rain suddenly changes to large hail",
+         "A strong headwind suddenly changes to a tailwind"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q32",
+        "question": "How long does a GPS satellite take for one orbit?",
+        "options": [
+         "About 12 hours",
+         "About 24 hours",
+         "About 90 minutes"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q33",
+        "question": "What is the average INS/IRS position error?",
+        "options": [
+         "20 NM per hour or less",
+         "2 NM per hour or less",
+         "0.2 NM per hour or less"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MB.Q34",
+        "question": "How long does INS alignment take?",
+        "options": [
+         "About 1 hour",
+         "About 15 minutes",
+         "About 1 minute"
+        ],
+        "correct": 1,
+        "explain": "INS alignment takes about 15 minutes; IRS alignment about 10 minutes."
+       },
+       {
+        "id": "M2.MB.Q35",
+        "question": "What is the cost index?",
+        "options": [
+         "The ratio of time-related cost to fuel cost",
+         "The cost of one flight hour",
+         "The price of fuel per kilogram"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MB.Q36",
+        "question": "What can RAIM do with only five satellites?",
+        "options": [
+         "Detect and exclude a faulty satellite",
+         "Nothing, it cannot work at all",
+         "Detect a fault but not exclude it"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q37",
+        "question": "Through which part of each system computer does the CMC communicate?",
+        "options": [
+         "The ACARS",
+         "The MCDU",
+         "The BITE"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MB.Q38",
+        "question": "What does FANS stand for?",
+        "options": [
+         "Flight Automatic Navigation System",
+         "Future Air Navigation System",
+         "Free Air Navigation Service"
+        ],
+        "correct": 1
+       }
+      ]
+     }
+    },
+    {
+     "id": "M2.MC",
+     "name": "Mock Exam C",
+     "lessons": [],
+     "batch": 13,
+     "quiz": {
+      "id": "M2.MC.QZ",
+      "name": "M13e — Mock exam 3",
+      "questions": [
+       {
+        "id": "M2.MC.Q1",
+        "question": "What does the propagation speed of a wave depend on?",
+        "options": [
+         "The amplitude of the voltage",
+         "The length of the antenna",
+         "The medium used"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q2",
+        "question": "When is the D layer present?",
+        "options": [
+         "Both day and night",
+         "Only during the day",
+         "Only during the night"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q3",
+        "question": "What is an antenna?",
+        "options": [
+         "A wave transformer between line energy and free radiation",
+         "An amplifier that strengthens the received RF signal",
+         "A filter that selects one frequency from the line"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q4",
+        "question": "What is the impedance of free air?",
+        "options": [
+         "150π, about 471 Ω",
+         "100π, about 314 Ω",
+         "120π, about 377 Ω"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q5",
+        "question": "What is selectivity?",
+        "options": [
+         "Suppressing frequencies other than the resonant one",
+         "Passing the widest possible band of frequencies",
+         "Raising the resonant frequency of the circuit"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q6",
+        "question": "Which oscillators are used when very high frequency stability is needed?",
+        "options": [
+         "Meissner oscillators",
+         "Crystal oscillators",
+         "RC oscillators"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q7",
+        "question": "What does suppressing one sideband do to the bandwidth?",
+        "options": [
+         "It doubles it",
+         "It leaves it unchanged",
+         "It halves it"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q8",
+        "question": "What does the mixer do?",
+        "options": [
+         "Converts the audio signal into a modulated carrier",
+         "Converts the variable antenna frequency into a fixed IF",
+         "Converts the fixed IF back into the audio signal"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q9",
+        "question": "What does the BFO do?",
+        "options": [
+         "Makes unmodulated or keyed transmissions audible",
+         "Keeps the received amplitude constant",
+         "Keeps the receiver tuned to one station"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q10",
+        "question": "How many VHF systems must an IFR aircraft have?",
+        "options": [
+         "Three",
+         "Two",
+         "One"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q11",
+        "question": "What does the Audio Management Unit (AMU) connect?",
+        "options": [
+         "The crew's audio equipment with the radio and navigation systems",
+         "The flight data recorder with the cockpit voice recorder",
+         "The radio management panels with the antennas"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q12",
+        "question": "Which antennas are used for HF?",
+        "options": [
+         "Loop antennas and horns",
+         "Sword antennas and dipoles",
+         "Rod antennas and slot antennas"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q13",
+        "question": "What is the flight interphone used for?",
+        "options": [
+         "Communication between the cockpit crew members",
+         "Announcements to the passengers",
+         "Communication between the cabin attendant stations"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q14",
+        "question": "When does the CVR stop recording?",
+        "options": [
+         "As soon as the aircraft touches down on the runway",
+         "5 minutes after the last engine is shut down on the ground",
+         "When the parking brake is set at the gate"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q15",
+        "question": "How are the ACARS MU software and database loaded?",
+        "options": [
+         "With the installed airborne data loader",
+         "Through the ACARS up link from the ground",
+         "With a portable data loader on the front of the MU"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q16",
+        "question": "What are the three segments of a SATCOM system?",
+        "options": [
+         "Satellite, ACARS management unit and VHF 3",
+         "Transmitter, receiver and antenna on the aircraft",
+         "Satellite, aircraft earth station and ground earth station"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q17",
+        "question": "What type of system is COSPAS/SARSAT?",
+        "options": [
+         "A low earth orbit system",
+         "A ground radar system",
+         "A geostationary system"
+        ],
+        "correct": 0,
+        "explain": "COSPAS/SARSAT is a low earth orbit system; GEOSAR is geostationary."
+       },
+       {
+        "id": "M2.MC.Q18",
+        "question": "What is the difference between track and heading called?",
+        "options": [
+         "Variation",
+         "Drift",
+         "Deviation"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q19",
+        "question": "What is quadrantal error?",
+        "options": [
+         "Bending of ADF bearings near 45° to the fuselage",
+         "Loss of signal directly over the station",
+         "Bending of signals by mountains"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q20",
+        "question": "What does a \"D\" in front of a VOR frequency on a chart mean?",
+        "options": [
+         "The VOR is out of service",
+         "A DME is collocated with the VOR",
+         "The VOR is a Doppler VOR"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q21",
+        "question": "Why is a DVOR used in mountainous areas?",
+        "options": [
+         "A DVOR is cheaper to build and maintain there",
+         "A conventional VOR has too little range in the hills",
+         "A conventional VOR may misnavigate due to reflections"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q22",
+        "question": "What frequency range does the ILS glide slope use?",
+        "options": [
+         "108.10 to 111.95 MHz",
+         "5031 to 5091 MHz",
+         "329.15 to 335.0 MHz"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q23",
+        "question": "Which marker beacon is no longer in use?",
+        "options": [
+         "The outer marker",
+         "The inner marker",
+         "The middle marker"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q24",
+        "question": "Where are the localizer and glide slope antennas usually located?",
+        "options": [
+         "Under the nose radome",
+         "On the bottom of the fuselage",
+         "On the vertical stabilizer"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q25",
+        "question": "What is the advantage of a high radar frequency?",
+        "options": [
+         "Longer range in all weather conditions",
+         "Better penetration of clouds and heavy rain",
+         "Stronger reflections, so small objects are found"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q26",
+        "question": "How many DME channels are there?",
+        "options": [
+         "200 X and 200 Y channels",
+         "126 X and 126 Y channels",
+         "40 X and 40 Y channels"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q27",
+        "question": "What height does the radio altimeter measure?",
+        "options": [
+         "From the extended main gear to the ground",
+         "From the nose to the runway threshold",
+         "From the cockpit to sea level"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q28",
+        "question": "What does code 7600 mean?",
+        "options": [
+         "Radio failure",
+         "Hijacking",
+         "Emergency"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q29",
+        "question": "Where are TCAS avoidance manoeuvres shown?",
+        "options": [
+         "On the heading scale of the ND",
+         "On the vertical speed scale of the PFD",
+         "On the speed scale of the PFD"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q30",
+        "question": "How is proximate traffic shown on the ND?",
+        "options": [
+         "An amber filled circle",
+         "A hollow white diamond",
+         "A solid white diamond"
+        ],
+        "correct": 2,
+        "explain": "Proximate traffic is a solid white diamond; other traffic is a hollow white diamond."
+       },
+       {
+        "id": "M2.MC.Q31",
+        "question": "Which is the least severe windshear alert?",
+        "options": [
+         "The caution alert, level 2",
+         "The advisory alert, level 1",
+         "The warning alert, level 3"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q32",
+        "question": "Why must a fourth GPS satellite be received?",
+        "options": [
+         "To correct the receiver clock time",
+         "To find the satellite's speed",
+         "To give a second position fix"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q33",
+        "question": "What does strap down mean?",
+        "options": [
+         "All parts are tied with straps for transport",
+         "All parts are held on a moving platform",
+         "All parts are fixed to the aircraft structure"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q34",
+        "question": "How are the waypoints put into an INS?",
+        "options": [
+         "By the ground station through a data link",
+         "By the FMS automatically from its database",
+         "By the crew, step by step into the CDU"
+        ],
+        "correct": 2,
+        "explain": "Only the INS holds the route waypoints; with an IRS the route is calculated by the FMS."
+       },
+       {
+        "id": "M2.MC.Q35",
+        "question": "Which ARINC characteristic sets out the FMCS layout?",
+        "options": [
+         "ARINC 429",
+         "ARINC 702",
+         "ARINC 424"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MC.Q36",
+        "question": "What maximum position error does B-RNAV (RNP 5) allow?",
+        "options": [
+         "5 NM",
+         "0.5 NM",
+         "50 NM"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MC.Q37",
+        "question": "When does the CMC start memorizing faults for the post flight report?",
+        "options": [
+         "As soon as the first engine starts",
+         "At the moment of take-off",
+         "3 minutes after engine start"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MC.Q38",
+        "question": "Which ARINC data bus was developed for the Boeing 777?",
+        "options": [
+         "ARINC 429",
+         "ARINC 629",
+         "ARINC 664"
+        ],
+        "correct": 1
+       }
+      ]
+     }
+    },
+    {
+     "id": "M2.MD",
+     "name": "Mock Exam D",
+     "lessons": [],
+     "batch": 14,
+     "quiz": {
+      "id": "M2.MD.QZ",
+      "name": "M13e — Mock exam 4",
+      "questions": [
+       {
+        "id": "M2.MD.Q1",
+        "question": "What is the identification tone of VOR, ILS and ADF?",
+        "options": [
+         "1020 Hz",
+         "3000 Hz",
+         "1350 Hz"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q2",
+        "question": "What is the skip zone?",
+        "options": [
+         "The area beyond the point where the first sky wave returns",
+         "The silent area between the end of the ground wave and the first sky wave",
+         "The area that is covered by the ground wave alone"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q3",
+        "question": "In which direction does a λ/2 dipole radiate?",
+        "options": [
+         "Equally in all directions in space",
+         "Along its axis, virtually zero at 90°",
+         "At 90° to its axis, virtually zero along its axis"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q4",
+        "question": "What type of line is a coaxial cable?",
+        "options": [
+         "A symmetric line",
+         "An asymmetric line",
+         "An unshielded line"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q5",
+        "question": "What is Thomson's oscillation formula?",
+        "options": [
+         "f0 = 2π√(LC)",
+         "f0 = √(L/C) / 2π",
+         "f0 = 1 / (2π√(LC))"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q6",
+        "question": "What is the piezo-effect?",
+        "options": [
+         "Pressure or pull on a crystal produces an electrical voltage",
+         "Heat on a crystal makes its frequency rise",
+         "Light on a crystal makes a current flow"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q7",
+        "question": "What determines the bandwidth of AM?",
+        "options": [
+         "The output power of the transmitter",
+         "The frequency of the carrier wave",
+         "The maximum frequency of the information signal"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q8",
+        "question": "What are the four tasks of a receiver?",
+        "options": [
+         "Receive, select, demodulate and convert",
+         "Mix, filter, multiply and divide",
+         "Generate, modulate, amplify and radiate"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q9",
+        "question": "What does AFC do?",
+        "options": [
+         "Keeps the received amplitude constant",
+         "Keeps the receiver tuned to the selected station",
+         "Makes unmodulated transmissions audible"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q10",
+        "question": "What does VHF range depend on?",
+        "options": [
+         "The altitude of the aircraft",
+         "The time of day and night",
+         "The season of the year"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q11",
+        "question": "What happens when the transfer button on an RMP is pressed?",
+        "options": [
+         "The standby frequency is erased",
+         "The standby and active frequencies swap windows",
+         "The active frequency is sent to all RMPs as standby"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q12",
+        "question": "Why has SELCAL become less important?",
+        "options": [
+         "HF radio is no longer used by the airlines",
+         "Ground stations have stopped sending the codes",
+         "ACARS data transmission is now widely used"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q13",
+        "question": "Which modes can the HF system operate in?",
+        "options": [
+         "AM or SSB",
+         "FM or AM",
+         "FM or SSB"
+        ],
+        "correct": 0,
+        "explain": "HF can use AM or SSB; VHF COM uses AM only."
+       },
+       {
+        "id": "M2.MD.Q14",
+        "question": "What is fitted on the front of the CVR to help find it under water?",
+        "options": [
+         "An emergency locator transmitter (ELT)",
+         "An underwater locator beacon (ULB)",
+         "A flashing strobe light"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q15",
+        "question": "What does the ACARS OFF report send?",
+        "options": [
+         "The time the aircraft touches down",
+         "The time all doors are closed",
+         "The time the aircraft lifts off"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q16",
+        "question": "What area does SATCOM cover?",
+        "options": [
+         "The whole earth, including the poles",
+         "Between 76° north and 76° south",
+         "Only within line of sight of a ground station"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q17",
+        "question": "What is the transmit power of a 406 MHz ELT?",
+        "options": [
+         "5 W",
+         "75 mW",
+         "700 mW"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q18",
+        "question": "What is the difference between QDM and QDR?",
+        "options": [
+         "Always the variation",
+         "Always 90°",
+         "Always 180°"
+        ],
+        "correct": 2,
+        "explain": "QDM is the magnetic bearing to the station, QDR the bearing from it: always 180° apart."
+       },
+       {
+        "id": "M2.MD.Q19",
+        "question": "What is the standard colour for ADF on the navigation display?",
+        "options": [
+         "Green",
+         "Amber",
+         "Blue"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q20",
+        "question": "How many VOR stations are needed to fix the aircraft position?",
+        "options": [
+         "One",
+         "Two",
+         "Three"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q21",
+        "question": "When does the VOR deviation bar show full deflection?",
+        "options": [
+         "When 10° or more off the selected course",
+         "When 30° or more off the selected course",
+         "When 2° or more off the selected course"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q22",
+        "question": "Which localizer frequencies are used?",
+        "options": [
+         "Only those with even tenths of a MHz",
+         "Only those with odd tenths of a MHz",
+         "Any tenth of a MHz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q23",
+        "question": "What polarization and frequency do marker beacons use?",
+        "options": [
+         "Horizontal, 75 MHz",
+         "Vertical, 75 MHz",
+         "Horizontal, 108 MHz"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q24",
+        "question": "How does MLS differ from ILS in its beams?",
+        "options": [
+         "MLS has one fixed pencil beam along the runway",
+         "MLS has no beams, only pulses from the DME",
+         "MLS has scanning beams in azimuth and elevation"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q25",
+        "question": "How does a magnetron create oscillation?",
+        "options": [
+         "With a crystal and an amplifier",
+         "With electric and magnetic fields in a cavity",
+         "With a rotating coil in a magnet"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q26",
+        "question": "What are squitter pulses?",
+        "options": [
+         "Random pulses a DME station sends with no aircraft near",
+         "Pulses an aircraft sends to start a search",
+         "Pulses that carry the station's Morse ident"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q27",
+        "question": "What is flight level referenced to?",
+        "options": [
+         "The local pressure at the airport",
+         "The ground directly below",
+         "The standard pressure of 1013.25 hPa"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q28",
+        "question": "What makes selective interrogation possible in Mode S?",
+        "options": [
+         "Each aircraft uses its own frequency",
+         "Each aircraft has a unique airframe address",
+         "Each aircraft has a different squawk for life"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q29",
+        "question": "Which transponder is needed for TCAS coordination?",
+        "options": [
+         "Mode S",
+         "Mode A",
+         "Mode C"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q30",
+        "question": "What is the symbol for a traffic advisory?",
+        "options": [
+         "A red filled square",
+         "A white filled diamond",
+         "An amber filled circle"
+        ],
+        "correct": 2,
+        "explain": "A TA intruder is an amber filled circle; an RA intruder is a red filled square."
+       },
+       {
+        "id": "M2.MD.Q31",
+        "question": "How far does the azimuth motor move the weather radar antenna?",
+        "options": [
+         "Plus and minus 90°",
+         "Plus and minus 180°",
+         "Plus and minus 30°"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MD.Q32",
+        "question": "What accuracy can differential GPS reach?",
+        "options": [
+         "About 100 m",
+         "About 1 m",
+         "About 13 m"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q33",
+        "question": "Which law does an accelerometer use?",
+        "options": [
+         "Newton's third law",
+         "Newton's first law",
+         "Newton's second law"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q34",
+        "question": "How long is the IRS align phase on the ground?",
+        "options": [
+         "About 10 minutes",
+         "About 1 minute",
+         "About 1 hour"
+        ],
+        "correct": 0,
+        "explain": "IRS alignment takes about 10 minutes; INS alignment about 15 minutes."
+       },
+       {
+        "id": "M2.MD.Q35",
+        "question": "Where must data be entered in independent mode?",
+        "options": [
+         "At the ATC panel",
+         "At both MCDUs",
+         "At one MCDU only"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q36",
+        "question": "What is added to the IRS position to give the FM position?",
+        "options": [
+         "The magnetic variation",
+         "The wind vector",
+         "An error vector (bias)"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MD.Q37",
+        "question": "For how many previous flights is CMC fault history kept?",
+        "options": [
+         "Up to 10",
+         "Up to 63",
+         "Up to 100"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MD.Q38",
+        "question": "Which datalink media does the ATIMS manage?",
+        "options": [
+         "VHF only, with no other options",
+         "SATCOM only, with VHF as a backup",
+         "VHF, with SATCOM and HF as options"
+        ],
+        "correct": 2
+       }
+      ]
+     }
+    },
+    {
+     "id": "M2.ME",
+     "name": "Mock Exam E",
+     "lessons": [],
+     "batch": 15,
+     "quiz": {
+      "id": "M2.ME.QZ",
+      "name": "M13e — Mock exam 5",
+      "questions": [
+       {
+        "id": "M2.ME.Q1",
+        "question": "How is the frequency of AC defined?",
+        "options": [
+         "The time taken for one complete cycle",
+         "The number of half-waves in one second",
+         "The number of complete cycles in one second"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q2",
+        "question": "What is the typical length of an antenna?",
+        "options": [
+         "2λ",
+         "λ/4",
+         "λ"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q3",
+        "question": "What does a Yagi antenna consist of?",
+        "options": [
+         "A dipole plus one or more directors",
+         "Two dipoles connected in parallel",
+         "A loop plus one or more reflectors"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q4",
+        "question": "What does an SWR of 1 mean?",
+        "options": [
+         "Identical impedances, maximum power transfer",
+         "Shorted line, maximum reflection",
+         "Open line, no power transfer"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q5",
+        "question": "What do electric oscillator systems consist of?",
+        "options": [
+         "Transformers and resistors",
+         "Resistors and diodes",
+         "Inductors and capacitors"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q6",
+        "question": "How does a PLL synthesizer solve the harmonic problem?",
+        "options": [
+         "It uses a separate crystal for every output channel",
+         "It uses two oscillators: a reference oscillator and a VCO",
+         "It uses a much higher reference frequency"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q7",
+        "question": "Which technology is the basis for SATCOM and the Mode-S transponder?",
+        "options": [
+         "Frequency shift keying (FSK)",
+         "Phase shift keying (PSK)",
+         "Amplitude shift keying (ASK)"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q8",
+        "question": "How does a double superhet suppress image frequencies?",
+        "options": [
+         "It has two mixers",
+         "It uses a lower IF",
+         "It has no local oscillator"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q9",
+        "question": "What is demodulation?",
+        "options": [
+         "Changing the carrier into the IF",
+         "Placing the signal onto the HF carrier",
+         "Recovering the signal from the HF carrier"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q10",
+        "question": "Which VHF system is on the emergency power supply?",
+        "options": [
+         "VHF 1",
+         "VHF 3",
+         "VHF 2"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q11",
+        "question": "Which microphone has priority when the oxygen mask is in use?",
+        "options": [
+         "The boom set microphone",
+         "The oxygen mask microphone",
+         "The handheld microphone"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q12",
+        "question": "How can a Key Interlock Fault be recognised?",
+        "options": [
+         "By a steady tune tone",
+         "By a flashing SELCAL light",
+         "By the missing sidetone"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q13",
+        "question": "What type of antenna is the VHF COM antenna?",
+        "options": [
+         "A λ/2 dipole",
+         "A loop antenna",
+         "A λ/4 rod antenna"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q14",
+        "question": "When can the CVR recording be erased?",
+        "options": [
+         "In flight with both engines running",
+         "On the ground with the parking brake set",
+         "At any time from the control panel"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q15",
+        "question": "What can VHF 3 be used for besides ACARS?",
+        "options": [
+         "As a backup for voice communication",
+         "As the emergency frequency receiver",
+         "As the ELT homing receiver"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q16",
+        "question": "What is the central unit of the SATCOM system?",
+        "options": [
+         "The Satellite Data Unit (SDU)",
+         "The Beam Steering Unit (BSU)",
+         "The High Power Amplifier (HPA)"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q17",
+        "question": "For how long does an ELT transmit in an upright position?",
+        "options": [
+         "At least 30 minutes",
+         "At least 90 days",
+         "At least 48 hours"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q18",
+        "question": "What is the reference for a relative bearing?",
+        "options": [
+         "The magnetic north pole",
+         "The aircraft's longitudinal axis",
+         "The geographical north pole"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q19",
+        "question": "What is Theta navigation?",
+        "options": [
+         "Finding position from distances to stations",
+         "Finding position from angles to stations",
+         "Finding position from the aircraft's speed"
+        ],
+        "correct": 1,
+        "explain": "Theta navigation uses angles to stations (ADF, VOR); Rho navigation uses distances (DME)."
+       },
+       {
+        "id": "M2.ME.Q20",
+        "question": "What is a terminal VOR (TVOR)?",
+        "options": [
+         "A high-power VOR used for enroute navigation",
+         "A VOR combined with a DME to measure distance",
+         "A VOR near an airport used for holdings and approaches"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q21",
+        "question": "Where is the VOR antenna located?",
+        "options": [
+         "On the vertical stabilizer",
+         "On the bottom of the fuselage",
+         "In the nose radome"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q22",
+        "question": "Which glide slope lobe is modulated with 90 Hz?",
+        "options": [
+         "The lower lobe",
+         "Both lobes equally",
+         "The upper lobe"
+        ],
+        "correct": 2,
+        "explain": "The glide slope's upper lobe is 90 Hz and lower lobe 150 Hz; below the path the deviation bar moves up."
+       },
+       {
+        "id": "M2.ME.Q23",
+        "question": "What is the decision height also called?",
+        "options": [
+         "The minimum",
+         "The flare height",
+         "The threshold"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q24",
+        "question": "What does radar accuracy mainly depend on?",
+        "options": [
+         "The time of day",
+         "The width of the radar beam",
+         "The colour of the target"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q25",
+        "question": "How is the beam changed for map mode?",
+        "options": [
+         "By switching off half of the antenna",
+         "By changing the frequency from high to low",
+         "By changing the polarization from vertical to horizontal"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q26",
+        "question": "What frequency range does the DME use?",
+        "options": [
+         "108 to 118 MHz",
+         "962 to 1213 MHz",
+         "4200 to 4400 MHz"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q27",
+        "question": "How does the height display change at decision height?",
+        "options": [
+         "It turns from green to amber with a DH label",
+         "It turns from amber to green and flashes",
+         "It turns from white to red with an RA label"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q28",
+        "question": "What does an ADS-C contract set out?",
+        "options": [
+         "How much the service costs",
+         "What information to send and when",
+         "Which runway the aircraft will use"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q29",
+        "question": "What does TCAS need from ground stations to work?",
+        "options": [
+         "Nothing, it works on its own",
+         "Signals from radio beacons",
+         "Data from the ATC radar"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q30",
+        "question": "Which TCAS operating modes can be selected?",
+        "options": [
+         "THRT, ALL, ABV and BLW",
+         "WX, TURB and MAP",
+         "STBY, TA and TA/RA"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q31",
+        "question": "What do the yellow bars on the windshear icon show?",
+        "options": [
+         "The safe vertical speed",
+         "The distance to the runway",
+         "The heading the pilot should avoid"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q32",
+        "question": "Which GPS signal and code can civil receivers use?",
+        "options": [
+         "The L1 signal and the C/A code",
+         "The L2 signal and the P code",
+         "The L2 signal and the Y code"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.ME.Q33",
+        "question": "How is a gimbal platform positioned?",
+        "options": [
+         "Pointed at true north and tilted down",
+         "Parallel to the earth's surface, whatever the attitude",
+         "Parallel to the aircraft floor at all times"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q34",
+        "question": "What does integrating the acceleration once give?",
+        "options": [
+         "The distance travelled",
+         "The present position",
+         "The ground speed"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q35",
+        "question": "What is a SID?",
+        "options": [
+         "The route between two airways",
+         "The route from the runway to the airway system",
+         "The route from the airway system to the runway"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.ME.Q36",
+        "question": "Which ARINC specification defines the navigation database?",
+        "options": [
+         "ARINC 424",
+         "ARINC 429",
+         "ARINC 702"
+        ],
+        "correct": 0,
+        "explain": "Here NDB means the navigation database, not a non-directional beacon."
+       },
+       {
+        "id": "M2.ME.Q37",
+        "question": "How can you confirm that a recorded fault caused a cockpit effect?",
+        "options": [
+         "By matching the flight number and the crew",
+         "By repeating the flight with the same crew",
+         "By matching the time, date and ATA chapter"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.ME.Q38",
+        "question": "What does AFDX stand for?",
+        "options": [
+         "Avionics Fibre Data eXchange",
+         "Avionics Full DupleX switched Ethernet",
+         "Automatic Flight Data eXtraction"
+        ],
+        "correct": 1
+       }
+      ]
+     }
+    },
+    {
+     "id": "M2.MF",
+     "name": "Mock Exam F",
+     "lessons": [],
+     "batch": 16,
+     "quiz": {
+      "id": "M2.MF.QZ",
+      "name": "M13e — Mock exam 6",
+      "questions": [
+       {
+        "id": "M2.MF.Q1",
+        "question": "How is the wavelength λ calculated?",
+        "options": [
+         "λ = c × f",
+         "λ = f / c",
+         "λ = c × T = c / f"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q2",
+        "question": "Why is the loop antenna well suited to direction finding?",
+        "options": [
+         "Because of its circular polarization",
+         "Because of its directional characteristic",
+         "Because of its very high gain"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q3",
+        "question": "What is the usual reference antenna for antenna gain?",
+        "options": [
+         "An isotropic antenna",
+         "A Yagi antenna",
+         "A λ/4 rod antenna"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q4",
+        "question": "What is needed for maximum energy transfer from transmitter to antenna?",
+        "options": [
+         "The line must be as long as possible",
+         "The antenna must be longer than λ",
+         "The transmitter and antenna impedances must match"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q5",
+        "question": "What happens at the end of an open RF line?",
+        "options": [
+         "Current and voltage are both zero",
+         "No current flows, the voltage is at maximum",
+         "Maximum current flows, the voltage is zero"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q6",
+        "question": "What sets the accuracy and stability of all synthesizer output frequencies?",
+        "options": [
+         "The reference oscillator",
+         "The harmonic generator",
+         "The output mixer"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q7",
+        "question": "What is it called when amplitude and phase modulation are combined?",
+        "options": [
+         "Binary PSK (BPSK)",
+         "Quadrature AM (QAM)",
+         "Quadrature PSK (QPSK)"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q8",
+        "question": "Where is PCM used?",
+        "options": [
+         "Digital audio and today's telephone systems",
+         "Fuel injection control in vehicles",
+         "Servo control in model aircraft"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q9",
+        "question": "When is it called modulation rather than mixing?",
+        "options": [
+         "When both frequencies are exactly the same",
+         "When both frequencies come from the same frequency band",
+         "When carrier and information are far apart, like HF and AF"
+        ],
+        "correct": 2,
+        "explain": "Mixing is used when both frequencies come from the same band; modulation when they are far apart, like HF and AF."
+       },
+       {
+        "id": "M2.MF.Q10",
+        "question": "How many channels does 8.33 kHz channel spacing give?",
+        "options": [
+         "About 760",
+         "More than 2000",
+         "About 1000"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q11",
+        "question": "Who mainly uses the service interphone?",
+        "options": [
+         "Cabin attendants",
+         "Passengers",
+         "Maintenance personnel"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q12",
+        "question": "What else does the antenna coupler do besides tuning?",
+        "options": [
+         "Matches the antenna impedance to the cable impedance",
+         "Amplifies the received signal for the receiver",
+         "Filters the SELCAL tones out of the audio"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q13",
+        "question": "Which mode do SELCAL ground stations always transmit in?",
+        "options": [
+         "FM",
+         "AM",
+         "SSB"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q14",
+        "question": "How much of the flight does an analogue tape CVR keep?",
+        "options": [
+         "The last 120 minutes",
+         "The whole flight",
+         "The last 30 minutes"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q15",
+        "question": "What kind of ACARS message is the load sheet report?",
+        "options": [
+         "An up link during take-off preparation",
+         "A down link after landing",
+         "A manual report from the pilot"
+        ],
+        "correct": 0,
+        "explain": "The load sheet is an up link: ground to aircraft."
+       },
+       {
+        "id": "M2.MF.Q16",
+        "question": "How is the SATCOM high gain antenna pointed at the satellite?",
+        "options": [
+         "By the pilot with a control knob",
+         "By a motor that turns it once a flight",
+         "By data from the beam steering unit"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q17",
+        "question": "What are the 121.5 MHz and 243 MHz ELT signals used for?",
+        "options": [
+         "Sending the aircraft identity",
+         "Homing in on the aircraft close by",
+         "Talking to the rescue crew"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q18",
+        "question": "What is track?",
+        "options": [
+         "The direction the aircraft moves over the earth",
+         "The direction from the aircraft to a station",
+         "The direction the aircraft's nose is pointing"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q19",
+        "question": "Which part of the loop signal does the ADF use for direction?",
+        "options": [
+         "The maximums",
+         "The average",
+         "The minimums"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q20",
+        "question": "What is the VOR reference signal like?",
+        "options": [
+         "The rotating beam of the lighthouse",
+         "The flashlight, sent in all directions",
+         "A narrow beam to the aircraft"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q21",
+        "question": "What polarization must the VOR ground antenna have?",
+        "options": [
+         "Horizontal",
+         "Circular",
+         "Vertical"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q22",
+        "question": "What does one dot on the localizer indicator normally show?",
+        "options": [
+         "About 1° offset",
+         "About 5° offset",
+         "About 0.35° offset"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q23",
+        "question": "Which marker sensitivity must be selected for an ILS approach?",
+        "options": [
+         "HIGH",
+         "Either",
+         "LOW"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q24",
+        "question": "Which ILS frequency is shown on the approach chart?",
+        "options": [
+         "Both frequencies",
+         "Only the localizer frequency",
+         "Only the glide slope frequency"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q25",
+        "question": "What does IMPATT stand for?",
+        "options": [
+         "Integrated Microwave Power Amplifier",
+         "Impact Ionization Avalanche Transit Time",
+         "Impulse Amplified Transmitter Tube"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q26",
+        "question": "What kind of system is the DME?",
+        "options": [
+         "A passive receiver",
+         "A primary radar system",
+         "A secondary radar system"
+        ],
+        "correct": 2,
+        "explain": "The DME is a secondary radar (it gets replies); the radio altimeter is a primary radar (it uses echoes)."
+       },
+       {
+        "id": "M2.MF.Q27",
+        "question": "What signal does an FM/CW radio altimeter transmit?",
+        "options": [
+         "A frequency modulated 4.3 GHz continuous wave",
+         "A pulsed 1 GHz signal with a fixed frequency",
+         "An amplitude modulated 110 MHz carrier wave"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q28",
+        "question": "What does a transponder send in Mode A?",
+        "options": [
+         "A unique airframe address",
+         "A four-digit identification code",
+         "The barometric altitude"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q29",
+        "question": "Why can TCAS give no RA against a Mode A-only aircraft?",
+        "options": [
+         "Mode A does not reply to TCAS",
+         "Mode A uses a different frequency",
+         "Mode A does not report altitude"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q30",
+        "question": "Why can clear air turbulence not be detected?",
+        "options": [
+         "It has no detectable related phenomena",
+         "It moves too fast for the radar beam",
+         "It is always too far ahead of the aircraft"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q31",
+        "question": "Below what height are no windshear alerts given?",
+        "options": [
+         "50 ft",
+         "5 ft",
+         "500 ft"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q32",
+        "question": "Where is each GPS antenna mounted?",
+        "options": [
+         "On the vertical stabilizer",
+         "On top of the fuselage",
+         "Under the fuselage"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q33",
+        "question": "Which factor is the most important for safety in a navigation system?",
+        "options": [
+         "Accuracy",
+         "Availability",
+         "Integrity"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q34",
+        "question": "When may ALIGN and NAV be selected on the IRS?",
+        "options": [
+         "Only on the ground with the aircraft not moving",
+         "Only in flight above 10,000 ft",
+         "At any time, on the ground or in flight"
+        ],
+        "correct": 0
+       },
+       {
+        "id": "M2.MF.Q35",
+        "question": "What are top of climb and top of descent?",
+        "options": [
+         "Radio beacons placed on the ground",
+         "Pseudo-waypoints calculated by the FMS",
+         "Reporting points chosen by ATC"
+        ],
+        "correct": 1
+       },
+       {
+        "id": "M2.MF.Q36",
+        "question": "What is GPS altitude not allowed to be used for?",
+        "options": [
+         "Time keeping",
+         "Position fixing",
+         "Vertical navigation"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q37",
+        "question": "What is an intermittent failure?",
+        "options": [
+         "One that is permanent and stays after landing",
+         "One that appears only during ground tests",
+         "One that occurs in flight but is not reported after landing"
+        ],
+        "correct": 2
+       },
+       {
+        "id": "M2.MF.Q38",
+        "question": "How do the A380 avionics world and open world communicate with each other?",
+        "options": [
+         "Directly, with no protection",
+         "Through firewalls",
+         "Only through the ACARS"
+        ],
+        "correct": 1
+       }
+      ]
+     }
     }
    ],
    "downloads": [
@@ -41298,9 +43681,46 @@
      "title": "Batch 10 · Full Bank · pages 1010–1134",
      "file": "downloads/M13e-Batch-10-Full-Bank-pages-1010-1134.pdf",
      "pages": 38
+    },
+    {
+     "id": "M2.MA.DL1",
+     "title": "M13e — Mock exam A",
+     "file": "downloads/M13e-Mock-Exam-A.pdf",
+     "pages": 5
+    },
+    {
+     "id": "M2.MB.DL1",
+     "title": "M13e — Mock exam B",
+     "file": "downloads/M13e-Mock-Exam-B.pdf",
+     "pages": 5
+    },
+    {
+     "id": "M2.MC.DL1",
+     "title": "M13e — Mock exam C",
+     "file": "downloads/M13e-Mock-Exam-C.pdf",
+     "pages": 5
+    },
+    {
+     "id": "M2.MD.DL1",
+     "title": "M13e — Mock exam D",
+     "file": "downloads/M13e-Mock-Exam-D.pdf",
+     "pages": 5
+    },
+    {
+     "id": "M2.ME.DL1",
+     "title": "M13e — Mock exam E",
+     "file": "downloads/M13e-Mock-Exam-E.pdf",
+     "pages": 5
+    },
+    {
+     "id": "M2.MF.DL1",
+     "title": "M13e — Mock exam F",
+     "file": "downloads/M13e-Mock-Exam-F.pdf",
+     "pages": 5
     }
    ],
-   "batches": 16
+   "batches": 16,
+   "mocks": 6
   },
   {
    "id": "M3",
