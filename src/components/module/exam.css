@@ -354,7 +354,7 @@
 .exam-frame .review[open] .chev { transform: rotate(225deg) translateY(-2px); }
 .exam-frame .result__list { list-style: none; margin: 0; padding: 4px 0 8px; }
 .exam-frame details .result__list { padding-top: 0; }
-.exam-frame .result__row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 20px; gap: 12px; align-items: start; padding: 12px 24px; }
+.exam-frame .result__row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 24px; }
 .exam-frame .result.is-in .result__row { animation: exam-rise .4s var(--ease) backwards; animation-delay: calc(1.1s + var(--i) * 60ms); }
 /* THE ROWS INSIDE THE FOLD DO NOT RISE, and that is the fold's doing rather
    than a taste call. A closed <details> skips its children's frames, so those
@@ -373,24 +373,28 @@
 .exam-frame .result__opts > summary .chev { flex: none; margin-top: 6px; }
 .exam-frame .result__opts[open] > summary .chev { transform: rotate(225deg) translateY(-2px); }
 .exam-frame .result__choices { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
-.exam-frame .result__q:has(.result__opts[open]) > .ans { display: none; }
-.exam-frame .rc { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--ground); font-size: 16px; line-height: 1.4; color: var(--t2); }
-.exam-frame .rc__r { width: 20px; height: 20px; border-radius: 50%; flex: none; border: 2px solid color-mix(in oklab, var(--line-strong) 30%, var(--t3)); display: grid; place-items: center; }
-.exam-frame .rc__r::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); }
-.exam-frame .rc__l { font-family: var(--font-mono); font-weight: 600; font-size: 14px; color: var(--t2); width: 1.2em; flex: none; }
+/* THE GREEN IS THE OWNER'S (2026-11-25): a right answer's edge is green. It is
+   used for "correct" and nothing else, and a wrong pick stays calm and grey. */
+.exam-frame { --ok-edge: oklch(.74 .15 152); }
+.app.theme-light .exam-frame { --ok-edge: oklch(.5 .14 152); }
+.exam-frame .result__choices { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.exam-frame .rc { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--ground); font-size: 16px; line-height: 1.4; color: var(--t2); }
+.exam-frame .rc__l { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--t3); width: 1em; flex: none; }
 .exam-frame .rc__t { flex: 1; min-width: 0; }
-.exam-frame .rc__tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--t3); flex: none; }
-.exam-frame .rc.is-right { border-color: var(--accent); background: var(--accent-soft); color: var(--t1); }
-.exam-frame .rc.is-right .rc__r { border-color: var(--accent); }
-.exam-frame .rc.is-right .rc__r::after { transform: scale(1); }
-.exam-frame .rc.is-right .rc__l { color: var(--t1); }
-.exam-frame .rc.is-right .rc__tag { color: var(--accent-ink); }
-.exam-frame .rc.is-picked { color: var(--t3); }
-.exam-frame .rc.is-picked .rc__r::after { background: var(--t3); transform: scale(1); }
-@media (max-width: 560px) { .exam-frame .rc { padding: 13px 12px; gap: 11px; } }
-.exam-frame .result__note { margin-top: 10px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--raised); display: grid; gap: 8px; }
-.exam-frame .result__note p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--t2); }
-.exam-frame .result__page { font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; color: var(--t3); }
+.exam-frame .rc__ok { width: 20px; height: 20px; flex: none; color: var(--ok-edge); }
+.exam-frame .rc__ok svg { width: 100%; height: 100%; display: block; }
+.exam-frame .rc.is-right { border: 1.5px solid var(--ok-edge); background: color-mix(in oklab, var(--ok-edge) 9%, var(--ground)); color: var(--t1); }
+.exam-frame .rc.is-right .rc__l { color: var(--ok-edge); }
+.exam-frame .rc.is-picked { color: var(--t3); background: transparent; border-style: dashed; }
+.exam-frame .result__note { margin: 10px 0 0; padding: 0 2px; font-size: 14px; line-height: 1.5; color: var(--t2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.exam-frame .result__page { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px; color: var(--t3); }
+.exam-frame .result__page svg { width: 14px; height: 14px; }
+.exam-frame .result__side { display: flex; align-items: center; gap: 10px; }
+.exam-frame .result__flag { width: 16px; height: 16px; color: var(--active); display: block; }
+.exam-frame .result__flag svg { width: 100%; height: 100%; fill: currentColor; display: block; }
+.exam-frame .result__save { padding: 2px; }
+.exam-frame .result__save svg { width: 17px; height: 17px; }
+.exam-frame .result__row .result__mark.is-right { color: var(--ok-edge); }
 @media (prefers-reduced-motion: no-preference) { .exam-frame .result__opts[open] .rc { animation: exam-rise .25s var(--ease) backwards; } }
 .exam-frame .ans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
 .exam-frame .ans__l { font-family: var(--font-mono); font-weight: 600; }
@@ -448,7 +452,7 @@
   .exam-frame .result__big { font-size: 52px; }
   .exam-frame .result__head { font-size: 18px; }
   .exam-frame .result__row, .exam-frame .result__foot, .exam-frame .review summary { padding-inline: 14px; }
-  .exam-frame .result__row { grid-template-columns: 26px minmax(0, 1fr) 20px; }
+  .exam-frame .result__row { grid-template-columns: 26px minmax(0, 1fr) auto; }
 }
 
 /* Smooth Air is this app's name for the same preference, and it is a class
