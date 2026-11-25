@@ -175,7 +175,7 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
-**13e's SIX MOCK EXAMS WENT IN ON 2026-11-25** (`scripts/m13e/import-mock.mjs`): Mock 1-6 are A-F at batches 11-16, ids `M2.MA`-`M2.MF`, `mocks: 6` on the module, **38 questions each** (two ATA 44 questions are pending, "CS manual not attached"), a 5pp paper each, mostly blank explanations. Cards fall back to the quiz as in 13d. Purely additive, no reset, `STORAGE_EPOCH` untouched.
+**13e's SIX MOCK EXAMS WENT IN ON 2026-11-25** (`scripts/m13e/import-mock.mjs`): Mock 1-6 are A-F at batches 11-16, ids `M2.MA`-`M2.MF`, `mocks: 6` on the module, **40 questions each** (they first arrived at 38 and were replaced the same day under the same ids; nobody had attempted them), a 5pp paper each, mostly blank explanations. Cards fall back to the quiz as in 13d. Purely additive, no reset, `STORAGE_EPOCH` untouched.
 
 **13e BATCH 8 WENT IN ON 2026-11-19, once its other four files arrived.** `M2.V8`
 pages **760–883**: quiz 40 (14/13/13), **17** open-ended cards, paper **30pp**
