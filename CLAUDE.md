@@ -1204,6 +1204,7 @@ merge them back together.
   `quizKey`: on a paper you cannot unsubmit, a shortcut that answers a question
   answers it by accident. Tab, Enter, Space and the radio group's own arrows
   are what is left.
+- **EVERY ROW ON THE RESULT OPENS TO ITS CHOICES** (owner, 2026-11-25). Right answers are no longer folded away: missed rows first, then the right ones, each question a collapsible (`.result__opts`) showing every choice with the right one marked, a miss's pick struck, and the explanation when there is one. `test:exam` asserts both.
 - The result screen carries the correction inside it — the missed questions
   with the pick struck through and the right answer after it, and the ones you
   got right folded away. The pass mark is **fixed at 75%** and decides pass or

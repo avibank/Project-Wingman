@@ -707,38 +707,26 @@ try {
     expect(`${at} puts no number on a marker`,
       (await page.locator(".mark").allTextContents()).every((t) => !/\d/.test(t)));
     expect(`${at} lists the ${N - c.right} it missed`,
-      (await page.locator(".result__list.review > .result__row").count()) === N - c.right);
-    expect(`${at} folds the right ones away unless nothing was missed`,
-      (await page.locator(".result details").evaluate((d) => d.open).catch(() => c.right === 0)) === (c.right === N));
+      (await page.locator(".result__list.review:not(.result__list--got) > .result__row").count()) === N - c.right);
+    expect(`${at} lists the ${c.right} it got right too`,
+      (await page.locator(".result__list--got > .result__row").count()) === c.right);
     if (c.right < N) {
-      const row = page.locator(".result__list.review > .result__row").first();
+      const row = page.locator(".result__list.review:not(.result__list--got) > .result__row").first();
       expect(`${at} shows the pick struck through and the right answer after it`,
         (await row.locator("s.ans--wrong").count()) === 1 && (await row.locator(".ans--right").count()) === 1);
     }
-    /* THE ROWS RISE IN ONE BY ONE AND THEY ALL ARRIVE, and the fold is where
-       that goes wrong. A closed <details> skips its children's animation
-       frames, so rows inside it sit at the first keyframe — nothing, because
-       `backwards` — until it opens. With the design's delay they then waited
-       out the 1.1s the result had already spent, and a student who opened the
-       fold got a list of blank rows for a second and a half. Inside the fold
-       the stagger counts from the moment it opens. */
-    if (c.right > 0 && c.right < N) {
-      const fold = page.locator(".result details");
-      await fold.locator("summary").click();
-      expect(`${at} the tick row opens the ones you got right`, await fold.evaluate((d) => d.open));
-      const shown = await page.waitForFunction(
-        () => [...document.querySelectorAll("details .result__row")]
-          .every((el) => Number(getComputedStyle(el).opacity) > 0.99),
-        null, { timeout: 900 },
-      ).then(() => true).catch(() => false);
-      expect(`${at} and they are on screen within the moment, not after the old delay`, shown);
-      await fold.locator("summary").click();
-      expect(`${at} and the same row shuts it again`, !(await fold.evaluate((d) => d.open)));
+    /* EVERY ROW, RIGHT OR WRONG, OPENS TO ITS CHOICES. */
+    {
+      const any = page.locator(".result__opts").first();
+      await any.locator("summary").click();
+      expect(`${at} a row opens to every choice, with the right one marked`,
+        (await any.locator(".result__choices li").count()) >= 2 && (await any.locator("li.is-right").count()) === 1);
+      await any.locator("summary").click();
     }
-    await page.locator(".result__list.review > .result__row").last()
+    await page.locator(".result__list.review:not(.result__list--got) > .result__row").last()
       .evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)))
       .catch(() => {});
-    const faded = await page.locator(".result__list.review > .result__row").evaluateAll(
+    const faded = await page.locator(".result__list.review:not(.result__list--got) > .result__row").evaluateAll(
       (els) => els.filter((el) => Number(getComputedStyle(el).opacity) < 0.99).length);
     expect(`${at} leaves every missed row on screen when the animation is over`, faded === 0);
     if (c.right === CASES[0].right && c.bar === 75) {
@@ -770,7 +758,7 @@ try {
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();
     await page.locator(".result").waitFor({ timeout: 5000 });
     await page.waitForTimeout(900);
-    const first = page.locator(".result__list.review > .result__row").first();
+    const first = page.locator(".result__list.review:not(.result__list--got) > .result__row").first();
     expect("a question with no answer shows a dash", (await first.locator(".ans--blank").textContent()) === "—");
     await page.close();
   }

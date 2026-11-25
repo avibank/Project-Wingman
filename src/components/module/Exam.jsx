@@ -134,7 +134,17 @@ function ReviewRow({ item, mine, n, k }) {
     <li className="result__row" style={{ "--i": k }}>
       <span className="result__n">{String(n).padStart(2, "0")}</span>
       <span className="result__q">
-        {item.question}
+        <details className="result__opts">
+          <summary><span>{item.question}</span><span className="chev" aria-hidden="true" /></summary>
+          <ul className="result__choices">
+            {item.options.map((o, j) => (
+              <li key={j} className={j === item.correct ? "is-right" : j === mine ? "is-picked" : ""}>
+                <span className="ans__l">{LABELS[j]}</span> {j === mine && j !== item.correct ? <s>{o}</s> : o}
+              </li>
+            ))}
+          </ul>
+          {item.explain && <p className="result__why">{item.explain}</p>}
+        </details>
         {!right && (
           <span className="ans">
             {mine === null
@@ -783,18 +793,9 @@ export default function Exam({
             )}
 
             {got.length > 0 && (
-              <details className="review" open={missed.length === 0}>
-                <summary aria-label="Answers you got right">
-                  <span className="result__mark is-right"><IconRight /></span>
-                  <span className="chev" aria-hidden="true" />
-                </summary>
-                {/* The fold's own rows are numbered from nought: their delay
-                    counts from the moment it opens, not from the moment the
-                    result arrived. See exam.css. */}
-                <ol className="result__list">
-                  {got.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={k} />)}
-                </ol>
-              </details>
+              <ol className="result__list review result__list--got">
+                {got.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={missed.length + k} />)}
+              </ol>
             )}
 
             <div className="result__foot">
