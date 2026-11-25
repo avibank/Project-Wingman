@@ -137,13 +137,23 @@ function ReviewRow({ item, mine, n, k }) {
         <details className="result__opts">
           <summary><span>{item.question}</span><span className="chev" aria-hidden="true" /></summary>
           <ul className="result__choices">
-            {item.options.map((o, j) => (
-              <li key={j} className={j === item.correct ? "is-right" : j === mine ? "is-picked" : ""}>
-                <span className="ans__l">{LABELS[j]}</span> {j === mine && j !== item.correct ? <s>{o}</s> : o}
-              </li>
-            ))}
+            {item.options.map((o, j) => {
+              const isRight = j === item.correct, isPick = j === mine && !isRight;
+              return (
+                <li key={j} className={`rc${isRight ? " is-right" : isPick ? " is-picked" : ""}`}>
+                  <span className="rc__l">{LABELS[j]}</span>
+                  <span className="rc__t">{isPick ? <s>{o}</s> : o}</span>
+                  <span className="rc__tag">{isRight ? "Correct" : isPick ? "Your pick" : ""}</span>
+                </li>
+              );
+            })}
           </ul>
-          {item.explain && <p className="result__why">{item.explain}</p>}
+          {(item.explain || item.page != null) && (
+            <div className="result__note">
+              {item.explain && <p>{item.explain}</p>}
+              {item.page != null && <span className="result__page">Manual · p. {item.page}</span>}
+            </div>
+          )}
         </details>
         {!right && (
           <span className="ans">

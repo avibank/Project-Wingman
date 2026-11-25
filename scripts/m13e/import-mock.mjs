@@ -25,7 +25,7 @@ for (let n = 1; n <= 6; n++) {
     if (keys.length < 2 || !q.question.trim()) die(`${ID} Q${i + 1}: unfinished`);
     const id = `${ID}.Q${i + 1}`; if (seen.has(id)) die(`dup ${id}`); seen.add(id);
     const e = (q.explanation || "").trim();
-    return { id, question: q.question.trim(), options: keys.map((k) => q.options[k].trim()), correct, ...(e ? { explain: e } : {}) };
+    return { id, question: q.question.trim(), options: keys.map((k) => q.options[k].trim()), correct, ...(e ? { explain: e } : {}), ...(Number.isFinite(q.page) ? { page: q.page } : {}) };
   });
   if (!questions.length) die(`${ID} has no questions`);
   const FILE = `M13e-Mock-Exam-${L}.pdf`;
