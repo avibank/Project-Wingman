@@ -710,6 +710,11 @@ try {
       (await page.locator(".result__list.review:not(.result__list--got) > .result__row").count()) === N - c.right);
     expect(`${at} lists the ${c.right} it got right too`,
       (await page.locator(".result__list--got > .result__row").count()) === c.right);
+    if (c.right < N) {
+      const row = page.locator(".result__list.review:not(.result__list--got) > .result__row").first();
+      expect(`${at} shows the pick struck through and the right answer after it`,
+        (await row.locator("s.ans--wrong").count()) === 1 && (await row.locator(".ans--right").count()) === 1);
+    }
     /* EVERY ROW, RIGHT OR WRONG, OPENS TO ITS CHOICES. */
     {
       const any = page.locator(".result__opts").first();

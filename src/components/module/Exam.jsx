@@ -159,6 +159,15 @@ function ReviewRow({ item, mine, n, k, flagged = false, moduleCode = null, chapt
             </p>
           )}
         </details>
+        {!right && (
+          <span className="ans">
+            {mine === null
+              ? <span className="ans--blank">—</span>
+              : <s className="ans--wrong"><span className="ans__l">{LABELS[mine]}</span> {item.options[mine]}</s>}
+            <span className="ans__arrow" aria-label="correct answer"><IconArrow /></span>
+            <span className="ans--right"><span className="ans__l">{LABELS[item.correct]}</span> {item.options[item.correct]}</span>
+          </span>
+        )}
       </span>
       <span className="result__side">
         {flagged && <span className="result__flag" title="You flagged this one"><IconFlagSolid /><span className="sr-only">Flagged for review</span></span>}
